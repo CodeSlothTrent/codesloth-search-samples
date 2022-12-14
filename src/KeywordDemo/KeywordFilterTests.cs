@@ -31,7 +31,6 @@ namespace KeywordFilterType
                 mappingDescriptor,
                 async (uniqueIndexName, opensearchClient) =>
                 {
-                    // Index some documents to test against
                     var productDocuments = new[] {
     new ProductDocument(1, "mouse", "computing accessory"),
     new ProductDocument(2, "mouse pad", "computing accessory"),
@@ -70,7 +69,6 @@ namespace KeywordFilterType
                 mappingDescriptor,
                 async (uniqueIndexName, opensearchClient) =>
                 {
-                    // Index some documents to test against
                     var productDocuments = new[] {
     new ProductDocument(1, "mouse", "computing accessory"),
     new ProductDocument(2, "mouse pad", "computing accessory"),
@@ -113,7 +111,6 @@ namespace KeywordFilterType
                 mappingDescriptor,
                 async (uniqueIndexName, opensearchClient) =>
                 {
-                    // Index some documents to test against
                     var productDocuments = new[] {
     new ProductDocument(1, "mouse", "computing accessory"),
     new ProductDocument(2, "mouse pad", "computing accessory"),
