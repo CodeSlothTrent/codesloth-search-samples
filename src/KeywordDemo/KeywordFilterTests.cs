@@ -15,41 +15,89 @@ namespace KeywordFilterType
 
         Func<TypeMappingDescriptor<ProductDocument>, ITypeMapping> mappingDescriptor = mapping => mapping
                     .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
+                        .Number(number => number.Name(name => name.Id))
                         .Keyword(word => word.Name(name => name.Name))
-                        .Keyword(word => word.Name(name => name.Category)
-                        )
+                        .Keyword(word => word.Name(name => name.Category))
                     );
 
         [Theory]
-        [InlineData("mouse", "Only the document name mouse will match")]
-        [InlineData("mouse pad", "Only the document name mouse pad will match")]
-        public async Task KeywordMapping_ExactlyMatchesWholeTerm(string termText, string explanation)
+        [InlineData("mouse", "Only the document with name mouse will match")]
+        [InlineData("mouse pad", "Only the document with name mouse pad will match")]
+        public async Task KeywordMapping_ExactlyMatchesWholeTermQuery(string termText, string explanation)
         {
             var indexName = "test-index";
-            await _fixture.PerformActionInTestIndex<ProductDocument>(
+            await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
-                async (opensearchClient) =>
+                async (uniqueIndexName, opensearchClient) =>
                 {
                     // Index some documents to test against
                     var productDocuments = new[] {
-    new ProductDocument("mouse", "computing accessory"),
-    new ProductDocument("mouse pad", "computing accessory"),
+    new ProductDocument(1, "mouse", "computing accessory"),
+    new ProductDocument(2, "mouse pad", "computing accessory"),
 };
 
-                    await _fixture.IndexDocuments(indexName, productDocuments);
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
 
                     var matchSearchResult = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(indexName)
+                           .Index(uniqueIndexName)
                            .Query(queryContainer => queryContainer
-                               .Match(term => term
+                               .Term(term => term
                                    .Field(field => field.Name)
-                                   .Query(termText)
+                                   .Value(termText)
                                    )
                                )
+                           .Explain()
                        );
 
                     matchSearchResult.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
+                }
+            );
+        }
+
+        [Theory]
+        [InlineData("mouse", new[] { "mouse" }, "Only the document with name mouse will match")]
+        [InlineData("mouse pad", new[] { "mouse", "pad" },
+            @"If the standard analyzer was run on this text it would produce two tokens: mouse, pad. 
+            Neither individual token would exactly match the mouse pad document name resulting in no document being returned. 
+            However, OepnSearch identifies that the mapping of the field is not Text and does not apply an analyzer at query time. 
+            This default behaviour only applies for text field mappings.")]
+        public async Task KeywordMapping_ExactlyMatchesKeywordQuery_BecauseNoAnalyzerIsUsedOnGivenText(string matchText, string[] expectedTokens, string explanation)
+        {
+            var indexName = "test-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    // Index some documents to test against
+                    var productDocuments = new[] {
+    new ProductDocument(1, "mouse", "computing accessory"),
+    new ProductDocument(2, "mouse pad", "computing accessory"),
+};
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    var matchSearchResult = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(queryContainer => queryContainer
+                               .Match(term => term
+                                   .Field(field => field.Name)
+                                   .Query(matchText)
+                                   )
+                               )
+                           .Explain()
+                       );
+
+                    matchSearchResult.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, matchText), explanation);
+
+                    // Let's confirm the tokens that WOULD have been generated if we used a match query on a TEXT field mapping
+                    var analyzeResult = await opensearchClient.Indices.AnalyzeAsync(selector => selector
+                        .Analyzer("standard")
+                        .Index(uniqueIndexName)
+                        .Text(matchText));
+
+                    analyzeResult.Tokens.Select(token => token.Token).Should().BeEquivalentTo(expectedTokens);
                 }
             );
         }
@@ -60,21 +108,21 @@ namespace KeywordFilterType
         public async Task KeywordMapping_DoesNotMatchMismatchedTerms(string termText, string explanation)
         {
             var indexName = "test-index";
-            await _fixture.PerformActionInTestIndex<ProductDocument>(
+            await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
-                async (opensearchClient) =>
+                async (uniqueIndexName, opensearchClient) =>
                 {
                     // Index some documents to test against
                     var productDocuments = new[] {
-    new ProductDocument("mouse", "computing accessory"),
-    new ProductDocument("mouse pad", "computing accessory"),
+    new ProductDocument(1, "mouse", "computing accessory"),
+    new ProductDocument(2, "mouse pad", "computing accessory"),
 };
 
-                    await _fixture.IndexDocuments(indexName, productDocuments);
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
 
                     var matchSearchResult = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(indexName)
+                           .Index(uniqueIndexName)
                            .Query(queryContainer => queryContainer
                                .Match(term => term
                                    .Field(field => field.Name)

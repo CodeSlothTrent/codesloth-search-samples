@@ -5,11 +5,14 @@
     /// </summary>
     public record ProductDocument
     {
-        public ProductDocument(string name, string category)
+        public ProductDocument(int id, string name, string category)
         {
+            Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Category = category ?? throw new ArgumentNullException(nameof(category));
         }
+
+        public int Id { get; init; }
 
         public string Name { get; init; }
 

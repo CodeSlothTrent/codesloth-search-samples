@@ -16,14 +16,15 @@ namespace KeywordFilterType
             _openSearchClient = new OpenSearchClient(connectionSettings);
         }
 
-        public delegate Task PerformActionOnIndex(IOpenSearchClient opensearchClient);
+        public delegate Task PerformActionOnIndex(string testIndexName, IOpenSearchClient opensearchClient);
 
         public async Task PerformActionInTestIndex<T>(string indexName, Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor, PerformActionOnIndex action) where T : class
         {
+            var uniqueIndexName = indexName + Guid.NewGuid().ToString();
             try
             {
                 var indexCreationResult = await _openSearchClient.Indices.CreateAsync(
-                    indexName,
+                    uniqueIndexName,
                     createRequest => createRequest
                     .Map(mappingDescriptor)
                 );
@@ -33,13 +34,13 @@ namespace KeywordFilterType
                     throw new Exception($"Failed to create index {indexCreationResult.DebugInformation}");
                 }
 
-                await action(_openSearchClient);
+                await action(uniqueIndexName, _openSearchClient);
             }
             finally
             {
                 try
                 {
-                    await _openSearchClient.Indices.DeleteAsync(indexName);
+                    await _openSearchClient.Indices.DeleteAsync(uniqueIndexName);
                 }
                 catch (Exception ex)
                 {
@@ -48,7 +49,7 @@ namespace KeywordFilterType
             }
         }
 
-        public async Task IndexDocuments<T>(string indexName, T[] docs) where T: class
+        public async Task IndexDocuments<T>(string indexName, T[] docs) where T : class
         {
             var bulkIndexResponse = await _openSearchClient.BulkAsync(selector => selector
                        .IndexMany(docs)
