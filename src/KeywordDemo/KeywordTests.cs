@@ -212,5 +212,84 @@ namespace KeywordFilterType
                 }
             );
         }
+
+        [Fact]
+        /// <summary>
+        /// Keyword fields do not require the FieldData mapping for sorting
+        /// </summary>
+        public async Task KeywordMapping_CanBeUsedAsASortedField_WithoutSpecifyingFieldDataInMapping()
+        {
+            var indexName = "test-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocuments = new[] {
+    new ProductDocument(1, "mouse"),
+    new ProductDocument(2, "mouse pad"),
+};
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(query => query.MatchAll())
+                           .Sort(sort => sort
+                            .Descending(fieldName => fieldName.Name)
+                        )
+                    );
+
+                    // Our documents can be sorted alphabetically
+                    result.IsValid.Should().BeTrue();
+                    var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
+                    formattedResults.Should().BeEquivalentTo("mouse pad, mouse");
+                }
+            );
+        }
+
+        [Fact]
+        /// <summary>
+        /// Keyword fields do not require the FieldData mapping for aggregations
+        /// </summary>
+        public async Task KeywordMapping_CanBeUsedAsAnAggregationField_WithoutSpecifyingFieldDataInMapping()
+        {
+            var indexName = "test-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocuments = new[] {
+    new ProductDocument(1, "mouse"),
+    new ProductDocument(3, "mouse pad"),
+    new ProductDocument(4, "mouse"),
+    new ProductDocument(5, "mouse"),
+    new ProductDocument(6, "mouse pad"),
+};
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    const string productCounts = "productCounts";
+
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(query => query.MatchAll())
+                           .Aggregations(aggregations => aggregations
+                            .Terms(productCounts, termSelector => termSelector.Field(field => field.Name))
+                        )
+                    );
+
+                    // Our documents can be sorted alphabetically
+                    result.IsValid.Should().BeTrue();
+                    var formattedResults = string.Join(", ", result.Aggregations
+                        .Terms(productCounts).Buckets
+                        .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
+                    );
+
+                    formattedResults.Should().BeEquivalentTo("mouse:3, mouse pad:2");
+                }
+            );
+        }
     }
 }
