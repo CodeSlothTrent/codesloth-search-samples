@@ -46,6 +46,7 @@ namespace KeywordFilterType
                            .Explain()
                        );
 
+                    result.IsValid.Should().BeTrue();
                     result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
                 }
             );
@@ -84,6 +85,7 @@ namespace KeywordFilterType
                            .Explain()
                        );
 
+                    result.IsValid.Should().BeTrue();
                     result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, matchText), explanation);
 
                     // Let's confirm the tokens that WOULD have been generated if we used a match query on a TEXT field mapping
@@ -125,6 +127,7 @@ namespace KeywordFilterType
                                )
                        );
 
+                    result.IsValid.Should().BeTrue();
                     result.Documents.Should().BeEmpty(explanation);
                 }
             );
@@ -152,14 +155,16 @@ namespace KeywordFilterType
                            .Index(uniqueIndexName)
                            .ScriptFields(scriptFields => scriptFields
                             .ScriptField(
-                               categoryFieldName, 
+                               categoryFieldName,
                                selector => selector.Source($"doc['{nameof(ProductDocument.Name).ToLowerInvariant()}'].value == 'mouse' ? 'computer accessory' : 'mouse accessory'"))
                             )
                            .Source(true)
                        );
 
+                    result.IsValid.Should().BeTrue();
+
                     // Cannot get ValueOf<TDoc, TFieldType>() working at time of writing - it always returns null.
-                    foreach(var hit in result.Hits)
+                    foreach (var hit in result.Hits)
                     {
                         hit.Fields.ValueOf<ScriptedProductDocument, string>(doc => doc.Category).Should().BeNull();
                     }
@@ -167,6 +172,43 @@ namespace KeywordFilterType
                     // Using Value<TFieldType> with string lookup instead
                     var formattedResults = string.Join(", ", result.Hits.Select(hit => $"{hit.Source.Name}:{hit.Fields.Value<string>(categoryFieldName)}"));
                     formattedResults.Should().BeEquivalentTo("mouse:computer accessory, mouse pad:mouse accessory");
+                }
+            );
+        }
+
+        [Fact]
+        public async Task KeywordMapping_CanBeUsedToScriptASortedField()
+        {
+            var indexName = "test-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocuments = new[] {
+    new ProductDocument(1, "mouse"),
+    new ProductDocument(2, "mouse pad"),
+};
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(query => query.MatchAll())
+                           .Sort(sort => sort
+                            .Script(sortScript => sortScript
+                                .Ascending()
+                                .Type("number")
+                                .Script(s => s.Source($"doc['{nameof(ProductDocument.Name).ToLowerInvariant()}'].value == 'mouse pad' ? 0 : 1")
+                                )
+                            )
+                        )
+                    );
+
+                    // Our scripted sort will return the mousepad at the top of the results
+                    result.IsValid.Should().BeTrue();
+                    var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
+                    formattedResults.Should().BeEquivalentTo("mouse pad, mouse");
                 }
             );
         }
