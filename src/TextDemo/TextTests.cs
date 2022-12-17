@@ -74,7 +74,14 @@ namespace TextDemo
             "This is a GREAT product!",
             new[] { "this", "is", "a" },
             "great:1, product:1",
-            "The standard analyzer does not produce additional tokens for single word strings")
+            "Our stopwords leave two tokens left for creation")
+        ]
+        [
+            InlineData(
+            "This is a GREAT product!",
+            new[] { "_english_" },
+            "great:1, product:1",
+            "The english stopword defaults are defined in the link above and also include those which we specified manually in the prior test case")
         ]
         public async Task TextMapping_CanBeConfiguredToUseStopWordsTokenFilterToOmitWordsAsTokens(string text, string[] stopWords, string expectedTokensCsv, string explanation)
         {
