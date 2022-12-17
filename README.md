@@ -1,7 +1,15 @@
 # Code Sloth Opensearch Tutorials
 This public repository contains the .Net demo code discussed in OpenSearch articles on https://codesloth.blog.
 
-## Solution Structure
+## Testing Frameworks and Libraries
+- Visual Studio IDE
+- .Net programming language
+- Xunit as unit testing tool
+- FluentAssertions for asserting expectations
+- Tests depend on a local OpenSearch instance running at http://localhost:9200
+  - For a tutorial on running OpenSearch locally on Windows, please refer to: https://codesloth.blog/running-opensearch-locally-in-docker/
+
+## Visual Studio Solution Structure
 The solution contains integration tests that are structured around specific OpenSearch concepts. 
 
 It is currently being populated with tests that demonstrate how to map and use each of the Field Data Types.
