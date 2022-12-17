@@ -275,11 +275,13 @@ namespace KeywordFilterType
                     var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
                            .Index(uniqueIndexName)
                            .Query(query => query.MatchAll())
+                           // We do not want any documents returned; just the aggregations
+                           .Size(0)
                            .Aggregations(aggregations => aggregations
                             .Terms(productCounts, termSelector => termSelector.Field(field => field.Name))
                         )
                     );
-
+                        
                     // Our documents can be sorted alphabetically
                     result.IsValid.Should().BeTrue();
                     var formattedResults = string.Join(", ", result.Aggregations
