@@ -27,7 +27,7 @@ namespace KeywordFilterType
         [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
         public async Task KeywordMapping_IndexesAStringInExactlyAsItIsGiven(string termText, string explanation)
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -61,7 +61,7 @@ namespace KeywordFilterType
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_ExactlyMatchesWholeTermQuery(string termText, string explanation)
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -100,7 +100,7 @@ namespace KeywordFilterType
             This default behaviour only applies for text field mappings.")]
         public async Task KeywordMapping_ExactlyMatchesKeywordQuery_BecauseNoQueryTimeAnalyzerIsUsedOnGivenText(string matchText, string[] expectedTokens, string explanation)
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -143,7 +143,7 @@ namespace KeywordFilterType
         [InlineData("mousepad", "Missing a space")]
         public async Task KeywordMapping_DoesNotMatchOnSlightlyMismatchedTerms(string termText, string explanation)
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -175,7 +175,7 @@ namespace KeywordFilterType
         [Fact]
         public async Task KeywordMapping_CanBeUsedToCreateAScriptedField()
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -218,7 +218,7 @@ namespace KeywordFilterType
         [Fact]
         public async Task KeywordMapping_CanBeUsedToScriptASortedField()
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -258,7 +258,7 @@ namespace KeywordFilterType
         /// </summary>
         public async Task KeywordMapping_CanBeUsedAsASortedField_WithoutSpecifyingFieldDataInMapping()
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,
@@ -293,7 +293,7 @@ namespace KeywordFilterType
         /// </summary>
         public async Task KeywordMapping_CanBeUsedAsAnAggregationField_WithoutSpecifyingFieldDataInMapping()
         {
-            var indexName = "test-index";
+            var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
                 indexName,
                 mappingDescriptor,

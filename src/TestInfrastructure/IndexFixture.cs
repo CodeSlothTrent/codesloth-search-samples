@@ -18,16 +18,25 @@ namespace KeywordFilterType
 
         public delegate Task PerformActionOnIndex(string testIndexName, IOpenSearchClient opensearchClient);
 
-        public async Task PerformActionInTestIndex<T>(string indexName, Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor, PerformActionOnIndex action) where T : class
+            public async Task PerformActionInTestIndex<T>(
+            string indexName,
+            Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor,
+            PerformActionOnIndex action,
+            Func<IndexSettingsDescriptor, IPromise<IIndexSettings>>? settingsDescriptor = null
+            ) where T : class
         {
             var uniqueIndexName = indexName + Guid.NewGuid().ToString();
             try
             {
-                var indexCreationResult = await _openSearchClient.Indices.CreateAsync(
-                    uniqueIndexName,
-                    createRequest => createRequest
-                    .Map(mappingDescriptor)
-                );
+                var createIndexDescriptor = new CreateIndexDescriptor(uniqueIndexName)
+                    .Map(mappingDescriptor);
+
+                if (settingsDescriptor!= null)
+                {
+                    createIndexDescriptor.Settings(settingsDescriptor);
+                }
+
+                var indexCreationResult = await _openSearchClient.Indices.CreateAsync(uniqueIndexName, descriptor => createIndexDescriptor);
 
                 if (!indexCreationResult.IsValid)
                 {
@@ -47,6 +56,19 @@ namespace KeywordFilterType
                     // Swallow the exception here - we tried our best to tidy up
                 }
             }
+        }
+
+        /// <summary>
+        /// An overload that takes a settings selector
+        /// </summary>
+        public async Task PerformActionInTestIndex<T>(
+          string indexName,
+          Func<IndexSettingsDescriptor, IPromise<IIndexSettings>> settingsDescriptor,
+          Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor,
+          PerformActionOnIndex action
+          ) where T : class
+        {
+            await PerformActionInTestIndex(indexName, mappingDescriptor, action, settingsDescriptor);
         }
 
         public async Task IndexDocuments<T>(string indexName, T[] docs) where T : class
