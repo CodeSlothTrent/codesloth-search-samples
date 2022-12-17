@@ -20,21 +20,21 @@ namespace TextDemo
         [
             InlineData(
             "product", 
-            new[] { "product" }, 
+            "product:1", 
             "The standard analyzer does not produce additional tokens for single word strings")
         ]
         [
             InlineData(
             "great product", 
-            new[] { "great", "product" }, 
-            "Two tokens are produced by the standard analyzer as it provides grammar based tokenisation")
+            "great:1, product:1", 
+            "Two individual tokens are produced by the standard analyzer as it provides grammar based tokenisation")
         ]
         [
             InlineData(
-            "This is a really amazing product. You absolutely must buy it!", 
-            new[] { "this", "is", "a", "really", "amazing", "product", "you", "absolutely", "must", "buy", "it" }, 
-            "Many tokens are produced. Gramma is stripped so that only words are indexed. Case is normalised to lowercase")]
-        public async Task TextMapping_UsesStandardAnalyzerByDefault(string text, string[] expectedTokens, string explanation)
+            "This is a really amazing product. It is great, you absolutely must buy it!",
+            "a:1, absolutely:1, amazing:1, buy:1, great:1, is:2, it:2, must:1, product:1, really:1, this:1, you:1",
+            "Many tokens are produced. Gramma is stripped so that only words are indexed. Case is normalised to lowercase. Recurring words are counted against the same token.")]
+        public async Task TextMapping_UsesStandardAnalyzerByDefault(string text, string expectedTokensCsv, string explanation)
         {
             var indexName = "test-index";
             await _fixture.PerformActionInTestIndex<ProductDocument>(
@@ -49,13 +49,15 @@ namespace TextDemo
 
                     await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
 
+                    // TermVectors will return us the indexed tokens for our field
                     var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
                            .Index(uniqueIndexName)
                            .Document(productDocument)
                        );
 
                     result.IsValid.Should().BeTrue();
-                    result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => term.Key)).Should().BeEquivalentTo(expectedTokens, explanation);
+                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
                 }
             );
         }
