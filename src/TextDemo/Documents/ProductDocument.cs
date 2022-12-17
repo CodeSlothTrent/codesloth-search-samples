@@ -1,14 +1,14 @@
-﻿namespace KeywordDemo.Documents
+﻿namespace TextDemo.Documents
 {
     /// <summary>
     /// A sample document that contains a single keyword field that is explored during multiple tests within the suite
     /// </summary>
     public record ProductDocument
     {
-        public ProductDocument(int id, string name)
+        public ProductDocument(int id, string description)
         {
             Id = id;
-            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Description = description ?? throw new ArgumentNullException(nameof(description));
         }
 
         /// <summary>
@@ -17,9 +17,9 @@
         public int Id { get; init; }
 
         /// <summary>
-        /// This string property will be mapped as a keyword
-        /// Conceptually this property may represent the name of a product
+        /// The string property of this document will be mapped as Text
+        /// Conceptually this property could represent a description of a product
         /// </summary>
-        public string Name { get; init; }
+        public string Description { get; init; }
     }
 }

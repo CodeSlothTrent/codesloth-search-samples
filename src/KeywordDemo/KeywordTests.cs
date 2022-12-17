@@ -11,11 +11,50 @@ namespace KeywordFilterType
             _fixture = fixture;
         }
 
+        /// <summary>
+        /// This function is used to define a keyword mapping for the Name of a product
+        /// Opensearch documentation: https://opensearch.org/docs/2.0/opensearch/supported-field-types/keyword/
+        /// ElasticSearch documentation is far richer in very similar detail: https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html
+        /// </summary>
         Func<TypeMappingDescriptor<ProductDocument>, ITypeMapping> mappingDescriptor = mapping => mapping
                     .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
-                        .Number(number => number.Name(name => name.Id))
                         .Keyword(word => word.Name(name => name.Name))
                     );
+
+        [Theory]
+        [InlineData("Mouse", "Single word is indexed exactly as given")]
+        [InlineData("Mouse pad", "Two words are indexed exactly as given")]
+        [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
+        public async Task KeywordMapping_IndexesAStringInExactlyAsItIsGiven(string termText, string explanation)
+        {
+            var indexName = "test-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocuments = new[] {
+    new ProductDocument(1, termText),
+};
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(queryContainer => queryContainer
+                               .Term(term => term
+                                   .Field(field => field.Name)
+                                   .Value(termText)
+                                   )
+                               )
+                           .Explain()
+                       );
+
+                    result.IsValid.Should().BeTrue();
+                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
+                }
+            );
+        }
 
         [Theory]
         [InlineData("mouse", "Only the document with name mouse will match")]
