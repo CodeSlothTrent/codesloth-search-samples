@@ -26,41 +26,6 @@ namespace KeywordDemo
         [InlineData("Mouse", "Single word is indexed exactly as given")]
         [InlineData("Mouse pad", "Two words are indexed exactly as given")]
         [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
-        public async Task KeywordMapping_IndexesAStringExactlyAsItIsGiven(string termText, string explanation)
-        {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
-    new ProductDocument(1, termText),
-};
-
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
-
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(queryContainer => queryContainer
-                               .Term(term => term
-                                   .Field(field => field.Name)
-                                   .Value(termText)
-                                   )
-                               )
-                           .Explain()
-                       );
-
-                    result.IsValid.Should().BeTrue();
-                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
-                }
-            );
-        }
-
-        [Theory]
-        [InlineData("Mouse", "Single word is indexed exactly as given")]
-        [InlineData("Mouse pad", "Two words are indexed exactly as given")]
-        [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
         public async Task KeywordMapping_IndexesASingleTokenForGivenString(string termText, string explanation)
         {
             var indexName = "keyword-index";
@@ -73,15 +38,7 @@ namespace KeywordDemo
 
                     await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
 
-                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Document(productDocument)
-                       );
-
-                    result.IsValid.Should().BeTrue();
-                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
-                    var expectedTokenCsv = $"{termText}:1";
-                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokenCsv, explanation);
+                    
                 }
             );
         }
