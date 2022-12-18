@@ -38,7 +38,15 @@ namespace KeywordDemo
 
                     await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
 
-                    
+                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Document(productDocument)
+                       );
+
+                    result.IsValid.Should().BeTrue();
+                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+                    var expectedTokenCsv = $"{termText}:1";
+                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokenCsv, explanation);
                 }
             );
         }
