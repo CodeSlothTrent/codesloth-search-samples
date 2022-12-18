@@ -1,6 +1,7 @@
 ﻿using KeywordDemo.Documents;
+using TestInfrastructure;
 
-namespace KeywordFilterType
+namespace KeywordDemo
 {
     public class KeywordTests : IClassFixture<IndexFixture>
     {
@@ -25,7 +26,7 @@ namespace KeywordFilterType
         [InlineData("Mouse", "Single word is indexed exactly as given")]
         [InlineData("Mouse pad", "Two words are indexed exactly as given")]
         [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
-        public async Task KeywordMapping_IndexesAStringInExactlyAsItIsGiven(string termText, string explanation)
+        public async Task KeywordMapping_IndexesAStringExactlyAsItIsGiven(string termText, string explanation)
         {
             var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
@@ -52,6 +53,35 @@ namespace KeywordFilterType
 
                     result.IsValid.Should().BeTrue();
                     result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
+                }
+            );
+        }
+
+        [Theory]
+        [InlineData("Mouse", "Single word is indexed exactly as given")]
+        [InlineData("Mouse pad", "Two words are indexed exactly as given")]
+        [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
+        public async Task KeywordMapping_IndexesASingleTokenForGivenString(string termText, string explanation)
+        {
+            var indexName = "keyword-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocument = new ProductDocument(1, termText);
+
+                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+
+                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Document(productDocument)
+                       );
+
+                    result.IsValid.Should().BeTrue();
+                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+                    var expectedTokenCsv = $"{termText}:1";
+                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokenCsv, explanation);
                 }
             );
         }
@@ -320,7 +350,7 @@ namespace KeywordFilterType
                             .Terms(productCounts, termSelector => termSelector.Field(field => field.Name))
                         )
                     );
-                        
+
                     // Our documents can be sorted alphabetically
                     result.IsValid.Should().BeTrue();
                     var formattedResults = string.Join(", ", result.Aggregations

@@ -1,5 +1,5 @@
 using FluentAssertions;
-using KeywordFilterType;
+using TestInfrastructure;
 using TextDemo.Documents;
 
 namespace TextDemo

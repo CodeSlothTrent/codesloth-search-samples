@@ -1,7 +1,7 @@
 ﻿using OpenSearch.Client;
 using OpenSearch.Net;
 
-namespace KeywordFilterType
+namespace TestInfrastructure
 {
     public class IndexFixture : IDisposable
     {
