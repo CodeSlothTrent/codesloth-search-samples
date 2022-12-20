@@ -88,7 +88,7 @@ namespace TextDemo
             var indexName = "text-index";
             var customAnalyzerName = "customAnalyzer";
 
-            await _fixture.PerformActionInTestIndex<ProductDocument>(
+            await _fixture.PerformActionInTestIndexWithSettings<ProductDocument>(
                 indexName,
                  settings => settings
                 // We can configure our custom analyzer via settings on the index
@@ -148,7 +148,7 @@ namespace TextDemo
             var indexName = "text-index";
             var customAnalyzerName = "customAnalyzer";
 
-            await _fixture.PerformActionInTestIndex<ProductDocument>(
+            await _fixture.PerformActionInTestIndexWithSettings<ProductDocument>(
                 indexName,
                  settings => settings
                 // We can configure our custom analyzer via settings on the index
@@ -180,6 +180,59 @@ namespace TextDemo
                     result.IsValid.Should().BeTrue();
                     var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
                     tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
+                }
+            );
+        }
+
+        [Theory]
+        /// <summary>
+        /// Performs a term query on text mapping to observe the results
+        /// </summary>
+        [
+            InlineData(
+            "product",
+            "The standard analyzer does not produce additional tokens for single word strings")
+        ]
+        [
+            InlineData(
+            "great product",
+            "Two individual tokens are produced by the standard analyzer as it provides grammar based tokenisation")
+        ]
+        [
+            InlineData(
+            "This is a really amazing product. It is great, you absolutely must buy it!",
+            "Many tokens are produced. Gramma is stripped so that only words are indexed. Case is normalised to lowercase. Recurring words are counted against the same token.")]
+        public async Task TextMapping_TermQuery_DoesSomething(string text, string explanation)
+        {
+            var indexName = "text-index";
+            var customAnalyzerName = "customAnalyzer";
+
+            await _fixture.PerformActionInTestIndex<ProductDocument>(
+                indexName,
+                mapping => mapping
+                    .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
+                        .Text(word => word
+                            .Name(name => name.Description)
+                    )),
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocument = new ProductDocument(1, text);
+
+                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+
+                    // TermVectors will return us the indexed tokens for our field
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                            .Index(uniqueIndexName)
+                            .Query(query => query
+                                .Term(term => term
+                                    .Field(field => field.Description)
+                                    .Value(text)
+                                    )
+                                )                        
+                            );
+
+                    result.IsValid.Should().BeTrue();
+                    result.Hits.Should().ContainSingle();
                 }
             );
         }

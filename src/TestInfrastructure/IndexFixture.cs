@@ -61,7 +61,7 @@ namespace TestInfrastructure
         /// <summary>
         /// An overload that takes a settings selector
         /// </summary>
-        public async Task PerformActionInTestIndex<T>(
+        public async Task PerformActionInTestIndexWithSettings<T>(
           string indexName,
           Func<IndexSettingsDescriptor, IPromise<IIndexSettings>> settingsDescriptor,
           Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor,
