@@ -98,7 +98,7 @@ namespace KeywordDemo
         [Theory]
         [InlineData("mouse", "Only the document with name mouse will match")]
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
-        public async Task KeywordMapping_CanBeFilteredOnWithConstantScoreQuery(string termText, string explanation)
+        public async Task KeywordMapping_CanBeFilteredAndScoredOnWithConstantScoreQuery(string termText, string explanation)
         {
             var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
@@ -122,6 +122,7 @@ namespace KeywordDemo
                                         .Field(field => field.Name)
                                         .Value(termText)
                                         ))
+                                    .Boost(3)
                                    )
                                )
                            .Explain()
@@ -129,6 +130,7 @@ namespace KeywordDemo
 
                     result.IsValid.Should().BeTrue();
                     result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
+                    result.Hits.Single().Score.Should().Be(3);
                 }
             );
         }
