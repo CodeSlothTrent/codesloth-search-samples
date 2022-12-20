@@ -60,7 +60,7 @@ namespace KeywordDemo
         [Theory]
         [InlineData("mouse", "Only the document with name mouse will match")]
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
-        public async Task KeywordMapping_CanBeFilteredOn(string termText, string explanation)
+        public async Task KeywordMapping_CanBeFilteredOnWithBooleanQuery(string termText, string explanation)
         {
             var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
@@ -79,6 +79,44 @@ namespace KeywordDemo
                            .Index(uniqueIndexName)
                            .Query(queryContainer => queryContainer
                                 .Bool(boolQuery => boolQuery
+                                    .Filter(filter => filter
+                                        .Term(term => term
+                                        .Field(field => field.Name)
+                                        .Value(termText)
+                                        ))
+                                   )
+                               )
+                           .Explain()
+                       );
+
+                    result.IsValid.Should().BeTrue();
+                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
+                }
+            );
+        }
+
+        [Theory]
+        [InlineData("mouse", "Only the document with name mouse will match")]
+        [InlineData("mouse pad", "Only the document with name mouse pad will match")]
+        public async Task KeywordMapping_CanBeFilteredOnWithConstantScoreQuery(string termText, string explanation)
+        {
+            var indexName = "keyword-index";
+            await _fixture.PerformActionInTestIndex(
+                indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocuments = new[] {
+    new ProductDocument(1, "mouse"),
+    new ProductDocument(2, "mouse pad"),
+};
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(queryContainer => queryContainer
+                                .ConstantScore(boolQuery => boolQuery
                                     .Filter(filter => filter
                                         .Term(term => term
                                         .Field(field => field.Name)
