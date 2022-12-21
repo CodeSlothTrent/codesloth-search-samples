@@ -185,6 +185,7 @@ namespace KeywordDemo
         [Theory]
         [InlineData("mous", "Missing a letter")]
         [InlineData("mousepad", "Missing a space")]
+        [InlineData("Mouse pad", "Missing a space")]
         public async Task KeywordMapping_DoesNotMatchOnSlightlyMismatchedTerms(string termText, string explanation)
         {
             var indexName = "keyword-index";
