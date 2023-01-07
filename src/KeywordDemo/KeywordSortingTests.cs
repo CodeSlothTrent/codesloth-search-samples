@@ -41,6 +41,7 @@ namespace KeywordDemo
                     var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
                            .Index(uniqueIndexName)
                            .Query(query => query.MatchAll())
+                           .Explain()
                            .Sort(sort => sort
                             .Script(sortScript => sortScript
                                 .Ascending()
@@ -61,9 +62,9 @@ namespace KeywordDemo
 
         [Fact]
         /// <summary>
-        /// Keyword fields do not require the FieldData mapping for sorting
+        /// Keyword fields do not require anything special to support sorting, such as the FieldData mapping that text fields might
         /// </summary>
-        public async Task KeywordMapping_CanBeUsedAsASortedField_WithoutSpecifyingFieldDataInMapping()
+        public async Task KeywordMapping_CanBeUsedAsASortedField_WithoutAnySpecialConsiderations()
         {
             var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
@@ -81,6 +82,7 @@ namespace KeywordDemo
                     var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
                            .Index(uniqueIndexName)
                            .Query(query => query.MatchAll())
+                           .Explain()
                            .Sort(sort => sort
                             .Descending(fieldName => fieldName.Name)
                         )

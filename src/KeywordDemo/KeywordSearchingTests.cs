@@ -142,7 +142,7 @@ namespace KeywordDemo
             Neither individual token would exactly match the mouse pad document name resulting in no document being returned. 
             However, OepnSearch identifies that the mapping of the field is not Text and does not apply an analyzer at query time. 
             This default behaviour only applies for text field mappings.")]
-        public async Task KeywordMapping_ExactlyMatchesKeywordQuery_BecauseNoQueryTimeAnalyzerIsUsedOnGivenText(string matchText, string[] expectedTokens, string explanation)
+        public async Task KeywordMapping_ProducesNoQueryTimeAnlaysis_ForMatchQuery(string matchText, string[] expectedTokens, string explanation)
         {
             var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
