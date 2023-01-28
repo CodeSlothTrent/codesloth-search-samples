@@ -109,8 +109,13 @@ namespace KeywordDemo
             );
         }
 
+        /// <summary>
+        /// Top hits is not recommended as a top level aggreagtion https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-top-hits-aggregation.html
+        /// Group using collapse instead (test below) <seealso cref="KeywordMapping_CanBeUsedForTermAggregation_Collapse()"/>
+        /// </summary>
+        /// <returns></returns>
         [Fact]
-        public async Task KeywordMapping_CanBeUsedForMetricAggregation_TopHits()
+        public async Task KeywordMapping_CanBeUsedForTermAggregation_TopHits()
         {
             var indexName = "keyword-index";
             await _fixture.PerformActionInTestIndex(
@@ -162,6 +167,51 @@ namespace KeywordDemo
                         ));
 
                     formattedResults.Should().BeEquivalentTo("5:mouse, 6:mouse pad");
+                }
+            );
+        }
+
+        /// <summary>
+        /// https://www.elastic.co/guide/en/elasticsearch/reference/current/collapse-search-results.html
+        /// Collapse the results on a given field, extracting the top result based on the sorting criteria specified
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task KeywordMapping_CanBeUsedForTermAggregation_Collapse()
+        {
+            var indexName = "keyword-index";
+            await _fixture.PerformActionInTestIndex(
+            indexName,
+                mappingDescriptor,
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var productDocuments = new[] {
+    new ProductDocument(1, "mouse"),
+    new ProductDocument(3, "mouse pad"),
+    new ProductDocument(4, "mouse"),
+    new ProductDocument(5, "mouse"),
+    new ProductDocument(6, "mouse pad"),
+    };
+
+                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+
+                    const string productTypes = "productTypes";
+                    const string topType = "topType";
+
+                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(query => query.MatchAll())
+                           // We do not want any documents returned; just the aggregations
+                           //.Size(0)
+                           .Collapse(selector => selector.Field(field => field.Name))
+                           .Sort(sort => sort.Descending(field => field.Id))
+                           .From(0)
+                    );
+
+                    // Our top hits documents are the documents with the highest id for their term
+                    result.IsValid.Should().BeTrue();
+                    var formattedResults = string.Join(", ", result.Documents.Select(doc => $"{doc.Id}:{doc.Name}"));
+                    formattedResults.Should().BeEquivalentTo("6:mouse pad, 5:mouse");
                 }
             );
         }
