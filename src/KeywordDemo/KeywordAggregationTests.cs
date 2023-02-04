@@ -1,6 +1,6 @@
 ﻿using KeywordDemo.Documents;
-using OpenSearch.Client;
 using TestInfrastructure;
+using static OpenSearch.Client.ObsoleteMappingsBase;
 
 namespace KeywordDemo
 {
@@ -37,12 +37,12 @@ namespace KeywordDemo
                 async (uniqueIndexName, opensearchClient) =>
                 {
                     var productDocuments = new[] {
-    new ProductDocument(1, "mouse"),
-    new ProductDocument(3, "mouse pad"),
-    new ProductDocument(4, "mouse"),
-    new ProductDocument(5, "mouse"),
-    new ProductDocument(6, "mouse pad"),
-};
+                        new ProductDocument(1, "mouse"),
+                        new ProductDocument(2, "mouse pad"),
+                        new ProductDocument(3, "mouse"),
+                        new ProductDocument(4, "mouse"),
+                        new ProductDocument(5, "mouse pad"),
+                    };
 
                     await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
 
@@ -80,12 +80,12 @@ namespace KeywordDemo
                 async (uniqueIndexName, opensearchClient) =>
                 {
                     var productDocuments = new[] {
-    new ProductDocument(1, "mouse"),
-    new ProductDocument(3, "mouse pad"),
-    new ProductDocument(4, "mouse"),
-    new ProductDocument(5, "mouse"),
-    new ProductDocument(6, "mouse pad"),
-};
+                        new ProductDocument(1, "mouse"),
+                        new ProductDocument(2, "mouse pad"),
+                        new ProductDocument(3, "mouse"),
+                        new ProductDocument(4, "mouse"),
+                        new ProductDocument(5, "mouse pad"),
+                    };
 
                     await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
 
@@ -124,12 +124,12 @@ namespace KeywordDemo
                 async (uniqueIndexName, opensearchClient) =>
                 {
                     var productDocuments = new[] {
-    new ProductDocument(1, "mouse"),
-    new ProductDocument(3, "mouse pad"),
-    new ProductDocument(4, "mouse"),
-    new ProductDocument(5, "mouse"),
-    new ProductDocument(6, "mouse pad"),
-    };
+                        new ProductDocument(1, "mouse"),
+                        new ProductDocument(2, "mouse pad"),
+                        new ProductDocument(3, "mouse"),
+                        new ProductDocument(4, "mouse"),
+                        new ProductDocument(5, "mouse pad"),
+                    };
 
                     await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
 
@@ -186,12 +186,12 @@ namespace KeywordDemo
                 async (uniqueIndexName, opensearchClient) =>
                 {
                     var productDocuments = new[] {
-    new ProductDocument(1, "mouse"),
-    new ProductDocument(3, "mouse pad"),
-    new ProductDocument(4, "mouse"),
-    new ProductDocument(5, "mouse"),
-    new ProductDocument(6, "mouse pad"),
-    };
+                        new ProductDocument(1, "mouse"),
+                        new ProductDocument(2, "mouse pad"),
+                        new ProductDocument(3, "mouse"),
+                        new ProductDocument(4, "mouse"),
+                        new ProductDocument(5, "mouse pad"),
+                    };
 
                     await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
 
@@ -214,6 +214,57 @@ namespace KeywordDemo
                     formattedResults.Should().BeEquivalentTo("6:mouse pad, 5:mouse");
                 }
             );
+        }
+
+        [Fact]
+        public async Task KeywordMapping_CanBeUsedForAdjacencyMatrixAggregation()
+        {
+            var indexName = "keyword-index";
+            await _fixture.PerformActionInTestIndex<UserFavouriteProducts>(
+                indexName,
+                mapping => mapping
+                    .Properties<UserFavouriteProducts>(propertyDescriptor => propertyDescriptor
+                        .Keyword(word => word.Name(name => name.ProductNames))
+                    ),
+                async (uniqueIndexName, opensearchClient) =>
+                {
+                    var userPurchasedProductDocuments = new[] {
+                        new UserFavouriteProducts(1, new []{ "mouse", "mouse pad" }),
+                        new UserFavouriteProducts(2, new []{ "mouse" }),
+                        new UserFavouriteProducts(3, new []{ "keyboard" }),
+                        new UserFavouriteProducts(4, new []{ "mouse pad", "keyboard" }),
+                        new UserFavouriteProducts(5, new []{ "mouse", "keyboard" }),
+                        new UserFavouriteProducts(6, new []{ "mouse", "mouse pad" }),
+                    };
+
+                    await _fixture.IndexDocuments(uniqueIndexName, userPurchasedProductDocuments);
+
+                    const string userProductPurchases = "userProductPurchases";
+
+                    var result = await opensearchClient.SearchAsync<UserFavouriteProducts>(selector => selector
+                           .Index(uniqueIndexName)
+                           .Query(query => query.MatchAll())
+                           // We do not want any documents returned; just the aggregations
+                           .Size(0)
+                           .Aggregations(aggregations => aggregations
+                            .AdjacencyMatrix(userProductPurchases, selector => selector
+                                .Filters(filter => filter
+                                    .Filter("mouse", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "mouse" })))
+                                    .Filter("mouse pad", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "mouse pad" })))
+                                    .Filter("keyboard", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "keyboard" })))
+                                )
+                            )
+                        ));
+
+                    // Extract each term and its associated number of hits
+                    result.IsValid.Should().BeTrue();
+                    var formattedResults = string.Join(", ", result.Aggregations
+                        .AdjacencyMatrix(userProductPurchases).Buckets
+                        .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
+                    );
+
+                    formattedResults.Should().BeEquivalentTo("mouse:3, mouse pad:2");
+                });
         }
     }
 }
