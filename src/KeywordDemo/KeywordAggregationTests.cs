@@ -263,7 +263,7 @@ namespace KeywordDemo
                         .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
                     );
 
-                    formattedResults.Should().BeEquivalentTo("mouse:3, mouse pad:2");
+                    formattedResults.Should().BeEquivalentTo("keyboard:3, keyboard&mouse:1, keyboard&mouse pad:1, mouse:4, mouse pad:3, mouse&mouse pad:2");
                 });
         }
     }
