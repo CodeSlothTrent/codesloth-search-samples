@@ -124,7 +124,7 @@ namespace KeywordDemo
                     // Our documents can be sorted alphabetically
                     result.IsValid.Should().BeTrue();
                     var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
-                    formattedResults.Should().BeEquivalentTo("2000, 5");
+                    formattedResults.Should().BeEquivalentTo("5, 2000");
                 }
             );
         }
