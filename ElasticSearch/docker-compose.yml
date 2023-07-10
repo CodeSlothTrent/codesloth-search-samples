@@ -1,0 +1,47 @@
+version: '3'
+services:
+  elasticsearch-node1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
+    container_name: elasticsearch-node1
+    environment:
+      - cluster.name=elasticsearch-cluster
+      - node.name=elasticsearch-node1
+      - discovery.seed_hosts=elasticsearch-node1
+      - cluster.initial_master_nodes=elasticsearch-node1
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m' # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - xpack.security.enabled=false # additional configuration to disable security by default for local development
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the elasticsearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - elasticsearch-data1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    networks:
+      - elasticsearch-net
+
+  elasticsearch-dashboards:
+    image: docker.elastic.co/kibana/kibana:8.8.2
+    container_name: elasticsearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - '5601'
+    environment:
+      - 'ES_HOSTS=["http://elasticsearch-node1:9200"]'
+      - 'xpack.security.enabled=false' # disables security plugin
+    networks:
+      - elasticsearch-net
+
+volumes:
+  elasticsearch-data1:
+  elasticsearch-data2:
+
+networks:
+  elasticsearch-net:
