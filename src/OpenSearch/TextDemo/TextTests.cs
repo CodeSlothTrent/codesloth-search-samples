@@ -1,8 +1,8 @@
 using FluentAssertions;
-using TestInfrastructure;
-using TextDemo.Documents;
+using OpenSearchTestInfrastructure;
+using OpenSearchTextDemo.Documents;
 
-namespace TextDemo
+namespace OpenSearchTextDemo
 {
     public class TextTests : IClassFixture<IndexFixture>
     {
@@ -228,7 +228,7 @@ namespace TextDemo
                                     .Field(field => field.Description)
                                     .Value(text)
                                     )
-                                )                        
+                                )
                             );
 
                     result.IsValid.Should().BeTrue();

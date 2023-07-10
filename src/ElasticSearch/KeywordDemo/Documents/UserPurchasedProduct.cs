@@ -1,4 +1,4 @@
-﻿namespace OpenSearchKeywordDemo.Documents
+﻿namespace ElasticSearchKeywordDemo.Documents
 {
     public record UserFavouriteProducts
     {

@@ -1,4 +1,4 @@
-﻿namespace KeywordDemo.Documents
+﻿namespace OpenSearchKeywordDemo.Documents
 {
     /// <summary>
     /// A sample document that contains a single keyword field that is explored during multiple tests within the suite

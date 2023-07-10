@@ -1,7 +1,8 @@
-﻿using OpenSearchKeywordDemo.Documents;
-using OpenSearchTestInfrastructure;
+﻿using ElasticSearchKeywordDemo.Documents;
+using ElasticSearchTestInfrastructure;
+using Nest;
 
-namespace OpenSearchKeywordDemo
+namespace ElasticSearchKeywordDemo
 {
     public class KeywordSearchingTests : IClassFixture<IndexFixture>
     {

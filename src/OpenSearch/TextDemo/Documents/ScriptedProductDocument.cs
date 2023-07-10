@@ -1,4 +1,4 @@
-﻿namespace TextDemo.Documents
+﻿namespace OpenSearchTextDemo.Documents
 {
     /// <summary>
     /// An extension of the keyword product document that is used to deserialise an additional scripted field in the response

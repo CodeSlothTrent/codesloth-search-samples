@@ -1,14 +1,14 @@
-﻿namespace OpenSearchTextDemo.Documents
+﻿namespace ElasticSearchKeywordDemo.Documents
 {
     /// <summary>
     /// A sample document that contains a single keyword field that is explored during multiple tests within the suite
     /// </summary>
     public record ProductDocument
     {
-        public ProductDocument(int id, string description)
+        public ProductDocument(int id, string name)
         {
             Id = id;
-            Description = description ?? throw new ArgumentNullException(nameof(description));
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
         /// <summary>
@@ -17,9 +17,9 @@
         public int Id { get; init; }
 
         /// <summary>
-        /// The string property of this document will be mapped as Text
-        /// Conceptually this property could represent a description of a product
+        /// This string property will be mapped as a keyword
+        /// Conceptually this property may represent the name of a product
         /// </summary>
-        public string Description { get; init; }
+        public string Name { get; init; }
     }
 }

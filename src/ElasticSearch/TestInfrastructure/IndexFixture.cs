@@ -1,22 +1,23 @@
-﻿using OpenSearch.Client;
-using OpenSearch.Net;
+﻿using Elasticsearch.Net;
+using Nest;
 
-namespace OpenSearchTestInfrastructure
+namespace ElasticSearchTestInfrastructure
 {
     public class IndexFixture : IDisposable
     {
-        private IOpenSearchClient _openSearchClient;
+        private IElasticClient _elasticClient;
         public IndexFixture()
         {
             var clusterUri = new Uri("http://localhost:9200");
             var connectionSettings = new ConnectionSettings(clusterUri)
                 .DisableDirectStreaming()
+                .EnableApiVersioningHeader()
                 .EnableDebugMode();
 
-            _openSearchClient = new OpenSearchClient(connectionSettings);
+            _elasticClient = new ElasticClient(connectionSettings);
         }
 
-        public delegate Task PerformActionOnIndex(string testIndexName, IOpenSearchClient opensearchClient);
+        public delegate Task PerformActionOnIndex(string testIndexName, IElasticClient opensearchClient);
 
         public async Task PerformActionInTestIndex<T>(
         string indexName,
@@ -36,20 +37,20 @@ namespace OpenSearchTestInfrastructure
                     createIndexDescriptor.Settings(settingsDescriptor);
                 }
 
-                var indexCreationResult = await _openSearchClient.Indices.CreateAsync(uniqueIndexName, descriptor => createIndexDescriptor);
+                var indexCreationResult = await _elasticClient.Indices.CreateAsync(uniqueIndexName, descriptor => createIndexDescriptor);
 
                 if (!indexCreationResult.IsValid)
                 {
                     throw new Exception($"Failed to create index {indexCreationResult.DebugInformation}");
                 }
 
-                await action(uniqueIndexName, _openSearchClient);
+                await action(uniqueIndexName, _elasticClient);
             }
             finally
             {
                 try
                 {
-                    await _openSearchClient.Indices.DeleteAsync(uniqueIndexName);
+                    await _elasticClient.Indices.DeleteAsync(uniqueIndexName);
                 }
                 catch (Exception ex)
                 {
@@ -73,7 +74,7 @@ namespace OpenSearchTestInfrastructure
 
         public async Task IndexDocuments<T>(string indexName, T[] docs) where T : class
         {
-            var bulkIndexResponse = await _openSearchClient.BulkAsync(selector => selector
+            var bulkIndexResponse = await _elasticClient.BulkAsync(selector => selector
                        .IndexMany(docs)
                        .Index(indexName)
                        // We want to be able to search these doucments right away. Force a refresh

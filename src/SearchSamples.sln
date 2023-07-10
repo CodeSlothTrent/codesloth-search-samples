@@ -11,11 +11,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OpenSearch", "OpenSearch", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ElasticSearch", "ElasticSearch", "{BAF3C495-0F38-496E-AF48-F308593C146D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeywordDemo", "OpenSearch\KeywordDemo\KeywordDemo.csproj", "{53DE3F48-6D57-47E1-A2FC-9E771452DF3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSearchKeywordDemo", "OpenSearch\KeywordDemo\OpenSearchKeywordDemo.csproj", "{53DE3F48-6D57-47E1-A2FC-9E771452DF3F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TextDemo", "OpenSearch\TextDemo\TextDemo.csproj", "{219AB68B-8A48-4901-9121-471896517EBA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSearchTextDemo", "OpenSearch\TextDemo\OpenSearchTextDemo.csproj", "{219AB68B-8A48-4901-9121-471896517EBA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestInfrastructure", "OpenSearch\TestInfrastructure\TestInfrastructure.csproj", "{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSearchTestInfrastructure", "OpenSearch\TestInfrastructure\OpenSearchTestInfrastructure.csproj", "{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FieldDataTypes", "FieldDataTypes", "{D227652E-00E5-474A-8C15-613DA6A2BAA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElasticSearchKeywordDemo", "ElasticSearch\KeywordDemo\ElasticSearchKeywordDemo.csproj", "{92D9357A-6FC7-4392-9DD2-0368AA4C400D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{1B4967E2-431C-4CE2-A476-7B251AA91C23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElasticSearchTestInfrastructure", "ElasticSearch\TestInfrastructure\ElasticSearchTestInfrastructure.csproj", "{09A37886-7B66-415A-BAE2-6451696E6CC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +43,14 @@ Global
 		{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92D9357A-6FC7-4392-9DD2-0368AA4C400D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92D9357A-6FC7-4392-9DD2-0368AA4C400D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92D9357A-6FC7-4392-9DD2-0368AA4C400D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92D9357A-6FC7-4392-9DD2-0368AA4C400D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09A37886-7B66-415A-BAE2-6451696E6CC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09A37886-7B66-415A-BAE2-6451696E6CC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09A37886-7B66-415A-BAE2-6451696E6CC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09A37886-7B66-415A-BAE2-6451696E6CC1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -45,6 +61,10 @@ Global
 		{53DE3F48-6D57-47E1-A2FC-9E771452DF3F} = {8898E039-BE0E-48AC-97C6-DCF7E665E8E8}
 		{219AB68B-8A48-4901-9121-471896517EBA} = {8898E039-BE0E-48AC-97C6-DCF7E665E8E8}
 		{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B} = {2AD1551F-D645-4343-987C-E0B938FFF89F}
+		{D227652E-00E5-474A-8C15-613DA6A2BAA9} = {BAF3C495-0F38-496E-AF48-F308593C146D}
+		{92D9357A-6FC7-4392-9DD2-0368AA4C400D} = {D227652E-00E5-474A-8C15-613DA6A2BAA9}
+		{1B4967E2-431C-4CE2-A476-7B251AA91C23} = {BAF3C495-0F38-496E-AF48-F308593C146D}
+		{09A37886-7B66-415A-BAE2-6451696E6CC1} = {1B4967E2-431C-4CE2-A476-7B251AA91C23}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8B681424-F471-4EC4-8EC1-B1D444539FC6}
