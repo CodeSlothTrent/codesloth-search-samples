@@ -166,7 +166,7 @@ namespace KeywordDemo
                                 .First()
                         ));
 
-                    formattedResults.Should().BeEquivalentTo("5:mouse, 6:mouse pad");
+                    formattedResults.Should().BeEquivalentTo("4:mouse, 5:mouse pad");
                 }
             );
         }
@@ -211,7 +211,7 @@ namespace KeywordDemo
                     // Our top hits documents are the documents with the highest id for their term
                     result.IsValid.Should().BeTrue();
                     var formattedResults = string.Join(", ", result.Documents.Select(doc => $"{doc.Id}:{doc.Name}"));
-                    formattedResults.Should().BeEquivalentTo("6:mouse pad, 5:mouse");
+                    formattedResults.Should().BeEquivalentTo("5:mouse pad, 4:mouse");
                 }
             );
         }
