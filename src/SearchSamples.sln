@@ -19,13 +19,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSearchTestInfrastructur
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FieldDataTypes", "FieldDataTypes", "{D227652E-00E5-474A-8C15-613DA6A2BAA9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElasticSearchKeywordDemo", "ElasticSearch\KeywordDemo\ElasticSearchKeywordDemo.csproj", "{92D9357A-6FC7-4392-9DD2-0368AA4C400D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElasticSearchKeywordDemo", "ElasticSearch\KeywordDemo\ElasticSearchKeywordDemo.csproj", "{92D9357A-6FC7-4392-9DD2-0368AA4C400D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{1B4967E2-431C-4CE2-A476-7B251AA91C23}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElasticSearchTestInfrastructure", "ElasticSearch\TestInfrastructure\ElasticSearchTestInfrastructure.csproj", "{09A37886-7B66-415A-BAE2-6451696E6CC1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElasticSearchTestInfrastructure", "ElasticSearch\TestInfrastructure\ElasticSearchTestInfrastructure.csproj", "{09A37886-7B66-415A-BAE2-6451696E6CC1}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{5C6135A3-26B4-4D26-BD50-4ED75EAC4D9F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A3D32A10-29B8-4C8E-94BD-9260EEDE6259}"
+	ProjectSection(SolutionItems) = preProject
+		SetMemory.ps1 = SetMemory.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
