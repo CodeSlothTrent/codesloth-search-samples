@@ -1,8 +1,8 @@
 ﻿namespace ElasticSearchKeywordDemo.Documents
 {
-    public record UserFavouriteProducts
+    public record ElasticsearchUserFavouriteProducts
     {
-        public UserFavouriteProducts(int userId, string[] productNames)
+        public ElasticsearchUserFavouriteProducts(int userId, string[] productNames)
         {
             UserId = userId;
             ProductNames = productNames;

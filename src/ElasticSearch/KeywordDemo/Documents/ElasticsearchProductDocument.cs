@@ -3,9 +3,9 @@
     /// <summary>
     /// A sample document that contains a single keyword field that is explored during multiple tests within the suite
     /// </summary>
-    public record ProductDocument
+    public record ElasticsearchProductDocument
     {
-        public ProductDocument(int id, string name)
+        public ElasticsearchProductDocument(int id, string name)
         {
             Id = id;
             Name = name ?? throw new ArgumentNullException(nameof(name));

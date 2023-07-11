@@ -19,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSearchTestInfrastructur
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FieldDataTypes", "FieldDataTypes", "{D227652E-00E5-474A-8C15-613DA6A2BAA9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElasticSearchKeywordDemo", "ElasticSearch\KeywordDemo\ElasticSearchKeywordDemo.csproj", "{92D9357A-6FC7-4392-9DD2-0368AA4C400D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElasticsearchKeywordDemo", "ElasticSearch\KeywordDemo\ElasticsearchKeywordDemo.csproj", "{92D9357A-6FC7-4392-9DD2-0368AA4C400D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{1B4967E2-431C-4CE2-A476-7B251AA91C23}"
 EndProject
