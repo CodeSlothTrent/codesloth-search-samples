@@ -8,7 +8,8 @@ namespace OpenSearchTestInfrastructure
         private IOpenSearchClient _openSearchClient;
         public IndexFixture()
         {
-            var clusterUri = new Uri("http://localhost:9200");
+            // This client uses 9201 so as to not port-clash with the elasticsearch containers
+            var clusterUri = new Uri("http://localhost:9201");
             var connectionSettings = new ConnectionSettings(clusterUri)
                 .DisableDirectStreaming()
                 .EnableDebugMode();

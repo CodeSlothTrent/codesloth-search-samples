@@ -1,0 +1,88 @@
+version: '3.4'
+
+services:
+  elasticsearch-node1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
+    container_name: elasticsearch-node1
+    environment:
+      - cluster.name=elasticsearch-cluster
+      - node.name=elasticsearch-node1
+      - discovery.seed_hosts=elasticsearch-node1
+      - cluster.initial_master_nodes=elasticsearch-node1
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m' # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - xpack.security.enabled=false # additional configuration to disable security by default for local development
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the elasticsearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - elasticsearch-data1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600 # required for Performance Analyzer
+    networks:
+      - elasticsearch-net
+
+  elasticsearch-dashboards:
+    image: docker.elastic.co/kibana/kibana:8.8.2
+    container_name: elasticsearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - '5601'
+    environment:
+      - 'ES_HOSTS=["http://elasticsearch-node1:9200"]'
+      - 'xpack.security.enabled=false' # disables security plugin
+    networks:
+      - elasticsearch-net
+
+  opensearch-node1:
+    image: opensearchproject/opensearch:2.0.1
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1
+      - cluster.initial_master_nodes=opensearch-node1
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - plugins.security.disabled=true # additional configuration to disable security by default for local development
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+    ports:
+      - 9201:9200
+      - 9601:9600 # required for Performance Analyzer
+    networks:
+      - opensearch-net
+  
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.0.1
+    container_name: opensearch-dashboards
+    ports:
+      - 5602:5601
+    expose:
+      - "5602"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch-node1:9201"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true" # disables security dashboards plugin in OpenSearch Dashboards
+    networks:
+      - opensearch-net
+
+volumes:
+  elasticsearch-data1:
+  opensearch-data1:
+
+networks:
+  elasticsearch-net:
+  opensearch-net:  

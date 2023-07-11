@@ -41,7 +41,6 @@ services:
 
 volumes:
   elasticsearch-data1:
-  elasticsearch-data2:
 
 networks:
   elasticsearch-net:

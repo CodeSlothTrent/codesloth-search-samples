@@ -1,0 +1,34 @@
+{
+    "profiles": {
+        "BothElasticAndOpenSearch": {
+            "commandName": "DockerCompose",
+            "commandVersion": "1.0",
+            "serviceActions": {
+                "elasticsearch-node1": "StartWithoutDebugging",
+                "elasticsearch-dashboards": "StartWithoutDebugging",
+                "opensearch-dashboards": "StartWithoutDebugging",
+                "opensearch-node1": "StartWithoutDebugging"
+            }
+        },
+        "ElasticSearchOnly": {
+            "commandName": "DockerCompose",
+            "commandVersion": "1.0",
+            "serviceActions": {
+                "elasticsearch-dashboards": "StartWithoutDebugging",
+                "elasticsearch-node1": "StartWithoutDebugging",
+                "opensearch-dashboards": "DoNotStart",
+                "opensearch-node1": "DoNotStart"
+            }
+        },
+        "OpenSearchOnly": {
+            "commandName": "DockerCompose",
+            "commandVersion": "1.0",
+            "serviceActions": {
+                "elasticsearch-dashboards": "DoNotStart",
+                "elasticsearch-node1": "DoNotStart",
+                "opensearch-dashboards": "StartWithoutDebugging",
+                "opensearch-node1": "StartWithoutDebugging"
+            }
+        }
+    }
+}
