@@ -6,7 +6,7 @@ namespace ElasticSearchTestInfrastructure
     /// <summary>
     /// This test fixture lives for the duration of all tests within a class
     /// </summary>
-    public class ElasticsearchIndexFixture : IDisposable
+    public class ElasticsearchIndexFixture
     {
         public IElasticClient ElasticClient;
 
@@ -76,39 +76,6 @@ namespace ElasticSearchTestInfrastructure
                     // Swallow the exception here - we tried our best to tidy up
                 }
             }
-        }
-
-        /// <summary>
-        /// An overload that takes a settings selector
-        /// </summary>
-        public async Task PerformActionInTestIndexWithSettings<T>(
-          string indexName,
-          Func<IndexSettingsDescriptor, IPromise<IIndexSettings>> settingsDescriptor,
-          Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor,
-          PerformActionOnIndex action
-          ) where T : class
-        {
-            await PerformActionInTestIndex(indexName, mappingDescriptor, action, settingsDescriptor);
-        }
-
-        public async Task IndexDocuments<T>(string indexName, T[] docs) where T : class
-        {
-            var bulkIndexResponse = await ElasticClient.BulkAsync(selector => selector
-                       .IndexMany(docs)
-                       .Index(indexName)
-                       // We want to be able to search these doucments right away. Force a refresh
-                       .Refresh(Refresh.True)
-                   );
-
-            if (!bulkIndexResponse.IsValid)
-            {
-                throw new Exception($"Failed to index documents. {bulkIndexResponse.DebugInformation}");
-            }
-        }
-
-        public void Dispose()
-        {
-            Console.WriteLine("Test");
         }
     }
 }
