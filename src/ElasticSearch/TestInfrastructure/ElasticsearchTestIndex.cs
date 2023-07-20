@@ -3,7 +3,7 @@ using Nest;
 
 namespace ElasticSearchTestInfrastructure
 {
-    public class ElasticsearchTestIndex : IDisposable
+    public class ElasticsearchTestIndex : IAsyncDisposable
     {
         private readonly IElasticClient ElasticClient;
         public string Name { get; init; } = Guid.NewGuid().ToString();
@@ -50,7 +50,7 @@ namespace ElasticSearchTestInfrastructure
             }
         }
 
-        public async void Dispose()
+        public async ValueTask DisposeAsync()
         {
             try
             {
