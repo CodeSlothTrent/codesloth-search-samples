@@ -1,16 +1,16 @@
-﻿using Elasticsearch.Net;
-using Nest;
+﻿using OpenSearch.Client;
+using OpenSearch.Net;
 
-namespace ElasticSearchTestInfrastructure
+namespace OpenSearchTestInfrastructure
 {
-    public class ElasticsearchTestIndex : IAsyncDisposable
+    public class OpensearchTestIndex : IAsyncDisposable
     {
-        private readonly IElasticClient ElasticClient;
+        private readonly IOpenSearchClient OpenSearchClient;
         public string Name { get; init; } = Guid.NewGuid().ToString();
 
-        public ElasticsearchTestIndex(IElasticClient elasticClient)
+        public OpensearchTestIndex(IOpenSearchClient elasticClient)
         {
-            ElasticClient = elasticClient;
+            OpenSearchClient = elasticClient;
         }
 
         public async Task CreateIndex<T>(
@@ -27,7 +27,7 @@ namespace ElasticSearchTestInfrastructure
                 createIndexDescriptor.Settings(settingsDescriptor);
             }
 
-            var indexCreationResult = await ElasticClient.Indices.CreateAsync(Name, descriptor => createIndexDescriptor);
+            var indexCreationResult = await OpenSearchClient.Indices.CreateAsync(Name, descriptor => createIndexDescriptor);
 
             if (!indexCreationResult.IsValid)
             {
@@ -37,7 +37,7 @@ namespace ElasticSearchTestInfrastructure
 
         public async Task IndexDocuments<T>(T[] docs) where T : class
         {
-            var bulkIndexResponse = await ElasticClient.BulkAsync(selector => selector
+            var bulkIndexResponse = await OpenSearchClient.BulkAsync(selector => selector
                        .IndexMany(docs)
                        .Index(Name)
                        // We want to be able to search these doucments right away. Force a refresh
@@ -54,7 +54,7 @@ namespace ElasticSearchTestInfrastructure
         {
             try
             {
-                await ElasticClient.Indices.DeleteAsync(Name);
+                await OpenSearchClient.Indices.DeleteAsync(Name);
             }
             catch (Exception ex)
             {

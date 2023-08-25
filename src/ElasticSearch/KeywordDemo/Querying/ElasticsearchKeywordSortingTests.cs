@@ -26,7 +26,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedToScriptASortedField()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[]
             {
@@ -62,7 +62,7 @@ namespace ElasticsearchKeywordDemo.Querying
         /// </summary>
         public async Task KeywordMapping_CanBeUsedAsASortedField_WithoutAnySpecialConsiderations()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[]
             {
@@ -90,7 +90,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_ShouldNotBeUsedToSortNumericData()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[]
             {

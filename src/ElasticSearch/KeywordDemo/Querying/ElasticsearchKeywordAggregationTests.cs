@@ -30,7 +30,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedForTermsAggregation()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[]
             {
@@ -68,7 +68,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedForMetricAggregation_Cardinality()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] {
                         new ElasticsearchProductDocument(1, "mouse"),
@@ -106,7 +106,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedForTermAggregation_TopHits()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
             var productDocuments = new[] {
                         new ElasticsearchProductDocument(1, "mouse"),
                         new ElasticsearchProductDocument(2, "mouse pad"),
@@ -161,7 +161,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedForTermAggregation_Collapse()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] {
                         new ElasticsearchProductDocument(1, "mouse"),
@@ -172,9 +172,6 @@ namespace ElasticsearchKeywordDemo.Querying
                     };
 
             await testIndex.IndexDocuments(productDocuments);
-
-            const string productTypes = "productTypes";
-            const string topType = "topType";
 
             var result = await _fixture.ElasticClient.SearchAsync<ElasticsearchProductDocument>(selector => selector
                    .Index(testIndex.Name)
@@ -195,7 +192,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedForAdjacencyMatrixAggregation()
         {
-            using var testIndex = await _fixture.CreateTestIndex<ElasticsearchUserFavouriteProducts>(mapping => mapping
+            await using var testIndex = await _fixture.CreateTestIndex<ElasticsearchUserFavouriteProducts>(mapping => mapping
                 .Properties(propertyDescriptor => propertyDescriptor
                     .Keyword(word => word.Name(name => name.ProductNames)
                     ))

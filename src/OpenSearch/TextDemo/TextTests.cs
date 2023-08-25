@@ -4,11 +4,11 @@ using OpenSearchTextDemo.Documents;
 
 namespace OpenSearchTextDemo
 {
-    public class TextTests : IClassFixture<IndexFixture>
+    public class TextTests : IClassFixture<OpenSearchIndexFixture>
     {
-        private IndexFixture _fixture;
+        private OpenSearchIndexFixture _fixture;
 
-        public TextTests(IndexFixture fixture)
+        public TextTests(OpenSearchIndexFixture fixture)
         {
             _fixture = fixture;
         }
@@ -37,30 +37,23 @@ namespace OpenSearchTextDemo
             "Many tokens are produced. Gramma is stripped so that only words are indexed. Case is normalised to lowercase. Recurring words are counted against the same token.")]
         public async Task TextMapping_UsesStandardAnalyzerByDefault(string text, string expectedTokensCsv, string explanation)
         {
-            var indexName = "text-index";
-            await _fixture.PerformActionInTestIndex<ProductDocument>(
-                indexName,
-                mapping => mapping
+            await using var testIndex = await _fixture.CreateTestIndex<ProductDocument>(mapping => mapping
                     .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
                         .Text(word => word.Name(name => name.Description))
-                    ),
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocument = new ProductDocument(1, text);
+                    ));
+            var productDocument = new ProductDocument(1, text);
 
-                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+            await testIndex.IndexDocuments(new[] { productDocument });
 
-                    // TermVectors will return us the indexed tokens for our field
-                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Document(productDocument)
-                       );
+            // TermVectors will return us the indexed tokens for our field
+            var result = await _fixture.OpenSearchClient.TermVectorsAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Document(productDocument)
+               );
 
-                    result.IsValid.Should().BeTrue();
-                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
-                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+            tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
         }
 
         [Theory]
@@ -85,43 +78,37 @@ namespace OpenSearchTextDemo
         ]
         public async Task TextMapping_StandardAnalyzer_CanBeConfiguredToUseStopWordsTokenFilterToOmitWordsAsTokens(string text, string[] stopWords, string expectedTokensCsv, string explanation)
         {
-            var indexName = "text-index";
             var customAnalyzerName = "customAnalyzer";
-
-            await _fixture.PerformActionInTestIndexWithSettings<ProductDocument>(
-                indexName,
-                 settings => settings
-                // We can configure our custom analyzer via settings on the index
-                .Analysis(analysis => analysis
-                    .Analyzers(analyzers => analyzers
-                    // Set stopwords to our custom list
-                    .Standard(customAnalyzerName, selector => selector.StopWords(stopWords)
-                    ))
-                ),
-                mapping => mapping
+            await using var testIndex = await _fixture.CreateTestIndex<ProductDocument>(
+                  mapping => mapping
                     .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
                         .Text(word => word
                             .Name(name => name.Description)
                             // Set our custom analyzer on this text mapping so that we apply the stop token filter during indexing
                             .Analyzer(customAnalyzerName)
                     )),
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocument = new ProductDocument(1, text);
+                      settings => settings
+                // We can configure our custom analyzer via settings on the index
+                .Analysis(analysis => analysis
+                    .Analyzers(analyzers => analyzers
+                    // Set stopwords to our custom list
+                    .Standard(customAnalyzerName, selector => selector.StopWords(stopWords)
+                    ))
+                )
+                    );
+            var productDocument = new ProductDocument(1, text);
 
-                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+            await testIndex.IndexDocuments(new[] { productDocument });
 
-                    // TermVectors will return us the indexed tokens for our field
-                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
-                            .Index(uniqueIndexName)
-                            .Document(productDocument)
-                        );
+            // TermVectors will return us the indexed tokens for our field
+            var result = await _fixture.OpenSearchClient.TermVectorsAsync<ProductDocument>(selector => selector
+                    .Index(testIndex.Name)
+                    .Document(productDocument)
+                );
 
-                    result.IsValid.Should().BeTrue();
-                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
-                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+            tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
         }
 
         [Theory]
@@ -145,19 +132,9 @@ namespace OpenSearchTextDemo
         ]
         public async Task TextMapping_StandardAnalyzer_CanBeConfiguredWithMaximumTokenLength(string text, int maxTokenLength, string expectedTokensCsv, string explanation)
         {
-            var indexName = "text-index";
             var customAnalyzerName = "customAnalyzer";
 
-            await _fixture.PerformActionInTestIndexWithSettings<ProductDocument>(
-                indexName,
-                 settings => settings
-                // We can configure our custom analyzer via settings on the index
-                .Analysis(analysis => analysis
-                    .Analyzers(analyzers => analyzers
-                    // Set stopwords to our custom list
-                    .Standard(customAnalyzerName, selector => selector.MaxTokenLength(maxTokenLength)
-                    ))
-                ),
+            await using var testIndex = await _fixture.CreateTestIndex<ProductDocument>(
                 mapping => mapping
                     .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
                         .Text(word => word
@@ -165,23 +142,29 @@ namespace OpenSearchTextDemo
                             // Set our custom analyzer on this text mapping so that we apply the stop token filter during indexing
                             .Analyzer(customAnalyzerName)
                     )),
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocument = new ProductDocument(1, text);
+                     settings => settings
+                // We can configure our custom analyzer via settings on the index
+                .Analysis(analysis => analysis
+                    .Analyzers(analyzers => analyzers
+                    // Set stopwords to our custom list
+                    .Standard(customAnalyzerName, selector => selector.MaxTokenLength(maxTokenLength)
+                    ))
+                )
+                );
 
-                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+            var productDocument = new ProductDocument(1, text);
 
-                    // TermVectors will return us the indexed tokens for our field
-                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
-                            .Index(uniqueIndexName)
-                            .Document(productDocument)
-                        );
+            await testIndex.IndexDocuments(new[] { productDocument });
 
-                    result.IsValid.Should().BeTrue();
-                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
-                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
-                }
-            );
+            // TermVectors will return us the indexed tokens for our field
+            var result = await _fixture.OpenSearchClient.TermVectorsAsync<ProductDocument>(selector => selector
+                    .Index(testIndex.Name)
+                    .Document(productDocument)
+                );
+
+            result.IsValid.Should().BeTrue();
+            var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+            tokensAndFrequency.Should().BeEquivalentTo(expectedTokensCsv, explanation);
         }
 
         [Theory]
@@ -204,37 +187,29 @@ namespace OpenSearchTextDemo
             "Many tokens are produced. Gramma is stripped so that only words are indexed. Case is normalised to lowercase. Recurring words are counted against the same token.")]
         public async Task TextMapping_TermQuery_DoesSomething(string text, string explanation)
         {
-            var indexName = "text-index";
-            var customAnalyzerName = "customAnalyzer";
-
-            await _fixture.PerformActionInTestIndex<ProductDocument>(
-                indexName,
-                mapping => mapping
+            await using var testIndex = await _fixture.CreateTestIndex<ProductDocument>(mapping => mapping
                     .Properties<ProductDocument>(propertyDescriptor => propertyDescriptor
                         .Text(word => word
                             .Name(name => name.Description)
-                    )),
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocument = new ProductDocument(1, text);
+                    )));
 
-                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+            var productDocument = new ProductDocument(1, text);
 
-                    // TermVectors will return us the indexed tokens for our field
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                            .Index(uniqueIndexName)
-                            .Query(query => query
-                                .Term(term => term
-                                    .Field(field => field.Description)
-                                    .Value(text)
-                                    )
-                                )
-                            );
+            await testIndex.IndexDocuments(new[] { productDocument });
 
-                    result.IsValid.Should().BeTrue();
-                    result.Hits.Should().ContainSingle();
-                }
-            );
+            // TermVectors will return us the indexed tokens for our field
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                    .Index(testIndex.Name)
+                    .Query(query => query
+                        .Term(term => term
+                            .Field(field => field.Description)
+                            .Value(text)
+                            )
+                        )
+                    );
+
+            result.IsValid.Should().BeTrue();
+            result.Hits.Should().ContainSingle(explanation);
         }
     }
 }

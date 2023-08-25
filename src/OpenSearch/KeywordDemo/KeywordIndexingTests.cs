@@ -3,11 +3,11 @@ using OpenSearchTestInfrastructure;
 
 namespace OpenSearchKeywordDemo
 {
-    public class KeywordIndexingTests : IClassFixture<IndexFixture>
+    public class KeywordIndexingTests : IClassFixture<OpenSearchIndexFixture>
     {
-        private IndexFixture _fixture;
+        private OpenSearchIndexFixture _fixture;
 
-        public KeywordIndexingTests(IndexFixture fixture)
+        public KeywordIndexingTests(OpenSearchIndexFixture fixture)
         {
             _fixture = fixture;
         }
@@ -28,27 +28,20 @@ namespace OpenSearchKeywordDemo
         [InlineData("This is a sentence! It contains some, really bad. Grammar;", "All grammar is indexed exactly as given")]
         public async Task KeywordMapping_IndexesASingleTokenForGivenString(string termText, string explanation)
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocument = new ProductDocument(1, termText);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocument = new ProductDocument(1, termText);
 
-                    await _fixture.IndexDocuments(uniqueIndexName, new[] { productDocument });
+            await testIndex.IndexDocuments(new[] { productDocument });
 
-                    var result = await opensearchClient.TermVectorsAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Document(productDocument)
-                       );
+            var result = await _fixture.OpenSearchClient.TermVectorsAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Document(productDocument)
+               );
 
-                    result.IsValid.Should().BeTrue();
-                    var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
-                    var expectedTokenCsv = $"{termText}:1";
-                    tokensAndFrequency.Should().BeEquivalentTo(expectedTokenCsv, explanation);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            var tokensAndFrequency = string.Join(", ", result.TermVectors.Values.SelectMany(value => value.Terms.Select(term => $"{term.Key}:{term.Value.TermFrequency}")));
+            var expectedTokenCsv = $"{termText}:1";
+            tokensAndFrequency.Should().BeEquivalentTo(expectedTokenCsv, explanation);
         }
     }
 }

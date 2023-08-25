@@ -3,11 +3,11 @@ using OpenSearchTestInfrastructure;
 
 namespace OpenSearchKeywordDemo
 {
-    public class KeywordSearchingTests : IClassFixture<IndexFixture>
+    public class KeywordSearchingTests : IClassFixture<OpenSearchIndexFixture>
     {
-        private IndexFixture _fixture;
+        private OpenSearchIndexFixture _fixture;
 
-        public KeywordSearchingTests(IndexFixture fixture)
+        public KeywordSearchingTests(OpenSearchIndexFixture fixture)
         {
             _fixture = fixture;
         }
@@ -27,34 +27,27 @@ namespace OpenSearchKeywordDemo
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_ExactlyMatchesWholeTermQuery(string termText, string explanation)
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
 };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(queryContainer => queryContainer
-                               .Term(term => term
-                                   .Field(field => field.Name)
-                                   .Value(termText)
-                                   )
-                               )
-                           .Explain()
-                       );
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(queryContainer => queryContainer
+                       .Term(term => term
+                           .Field(field => field.Name)
+                           .Value(termText)
+                           )
+                       )
+                   .Explain()
+               );
 
-                    result.IsValid.Should().BeTrue();
-                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
         }
 
         [Theory]
@@ -62,37 +55,29 @@ namespace OpenSearchKeywordDemo
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_CanBeFilteredOnWithBooleanQuery(string termText, string explanation)
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
 };
+            await testIndex.IndexDocuments(productDocuments);
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(queryContainer => queryContainer
+                        .Bool(boolQuery => boolQuery
+                            .Filter(filter => filter
+                                .Term(term => term
+                                .Field(field => field.Name)
+                                .Value(termText)
+                                ))
+                           )
+                       )
+                   .Explain()
+               );
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(queryContainer => queryContainer
-                                .Bool(boolQuery => boolQuery
-                                    .Filter(filter => filter
-                                        .Term(term => term
-                                        .Field(field => field.Name)
-                                        .Value(termText)
-                                        ))
-                                   )
-                               )
-                           .Explain()
-                       );
-
-                    result.IsValid.Should().BeTrue();
-                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
         }
 
         [Theory]
@@ -100,39 +85,32 @@ namespace OpenSearchKeywordDemo
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_CanBeFilteredAndScoredOnWithConstantScoreQuery(string termText, string explanation)
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
-};
+    };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(queryContainer => queryContainer
-                                .ConstantScore(boolQuery => boolQuery
-                                    .Filter(filter => filter
-                                        .Term(term => term
-                                        .Field(field => field.Name)
-                                        .Value(termText)
-                                        ))
-                                    .Boost(3)
-                                   )
-                               )
-                           .Explain()
-                       );
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(queryContainer => queryContainer
+                        .ConstantScore(boolQuery => boolQuery
+                            .Filter(filter => filter
+                                .Term(term => term
+                                .Field(field => field.Name)
+                                .Value(termText)
+                                ))
+                            .Boost(3)
+                           )
+                       )
+                   .Explain()
+               );
 
-                    result.IsValid.Should().BeTrue();
-                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
-                    result.Hits.Single().Score.Should().Be(3);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, termText), explanation);
+            result.Hits.Single().Score.Should().Be(3);
         }
 
         [Theory]
@@ -144,42 +122,35 @@ namespace OpenSearchKeywordDemo
             This default behaviour only applies for text field mappings.")]
         public async Task KeywordMapping_ProducesNoQueryTimeAnlaysis_ForMatchQuery(string matchText, string[] expectedTokens, string explanation)
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
-};
+    };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(queryContainer => queryContainer
-                               .Match(term => term
-                                   .Field(field => field.Name)
-                                   .Query(matchText)
-                                   )
-                               )
-                           .Explain()
-                       );
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(queryContainer => queryContainer
+                       .Match(term => term
+                           .Field(field => field.Name)
+                           .Query(matchText)
+                           )
+                       )
+                   .Explain()
+               );
 
-                    result.IsValid.Should().BeTrue();
-                    result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, matchText), explanation);
+            result.IsValid.Should().BeTrue();
+            result.Documents.Should().ContainSingle(doc => string.Equals(doc.Name, matchText), explanation);
 
-                    // Let's confirm the tokens that WOULD have been generated if we used a match query on a TEXT field mapping
-                    var analyzeResult = await opensearchClient.Indices.AnalyzeAsync(selector => selector
-                        .Analyzer("standard")
-                        .Index(uniqueIndexName)
-                        .Text(matchText));
+            // Let's confirm the tokens that WOULD have been generated if we used a match query on a TEXT field mapping
+            var analyzeResult = await _fixture.OpenSearchClient.Indices.AnalyzeAsync(selector => selector
+                .Analyzer("standard")
+                .Index(testIndex.Name)
+                .Text(matchText));
 
-                    analyzeResult.Tokens.Select(token => token.Token).Should().BeEquivalentTo(expectedTokens);
-                }
-            );
+            analyzeResult.Tokens.Select(token => token.Token).Should().BeEquivalentTo(expectedTokens);
         }
 
         [Theory]
@@ -188,33 +159,26 @@ namespace OpenSearchKeywordDemo
         [InlineData("Mouse pad", "Missing a space")]
         public async Task KeywordMapping_DoesNotMatchOnSlightlyMismatchedTerms(string termText, string explanation)
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
-};
+    };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(queryContainer => queryContainer
-                               .Match(term => term
-                                   .Field(field => field.Name)
-                                   .Query(termText)
-                                   )
-                               )
-                       );
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(queryContainer => queryContainer
+                       .Match(term => term
+                           .Field(field => field.Name)
+                           .Query(termText)
+                           )
+                       )
+               );
 
-                    result.IsValid.Should().BeTrue();
-                    result.Documents.Should().BeEmpty(explanation);
-                }
-            );
+            result.IsValid.Should().BeTrue();
+            result.Documents.Should().BeEmpty(explanation);
         }
     }
 }

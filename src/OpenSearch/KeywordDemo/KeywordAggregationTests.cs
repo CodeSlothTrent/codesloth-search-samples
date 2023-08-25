@@ -3,11 +3,11 @@ using OpenSearchTestInfrastructure;
 
 namespace OpenSearchKeywordDemo
 {
-    public class KeywordAggregationTests : IClassFixture<IndexFixture>
+    public class KeywordAggregationTests : IClassFixture<OpenSearchIndexFixture>
     {
-        private IndexFixture _fixture;
+        private OpenSearchIndexFixture _fixture;
 
-        public KeywordAggregationTests(IndexFixture fixture)
+        public KeywordAggregationTests(OpenSearchIndexFixture fixture)
         {
             _fixture = fixture;
         }
@@ -29,13 +29,9 @@ namespace OpenSearchKeywordDemo
         [Fact]
         public async Task KeywordMapping_CanBeUsedForTermsAggregation()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+
+            var productDocuments = new[] {
                         new ProductDocument(1, "mouse"),
                         new ProductDocument(2, "mouse pad"),
                         new ProductDocument(3, "mouse"),
@@ -43,42 +39,36 @@ namespace OpenSearchKeywordDemo
                         new ProductDocument(5, "mouse pad"),
                     };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    const string productCounts = "productCounts";
+            const string productCounts = "productCounts";
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           // We do not want any documents returned; just the aggregations
-                           .Size(0)
-                           .Aggregations(aggregations => aggregations
-                            .Terms(productCounts, selector => selector.Field(field => field.Name))
-                        )
-                    );
-
-                    // Extract each term and its associated number of hits
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result.Aggregations
-                        .Terms(productCounts).Buckets
-                        .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
-                    );
-
-                    formattedResults.Should().BeEquivalentTo("mouse:3, mouse pad:2");
-                }
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   // We do not want any documents returned; just the aggregations
+                   .Size(0)
+                   .Aggregations(aggregations => aggregations
+                    .Terms(productCounts, selector => selector.Field(field => field.Name))
+                )
             );
+
+            // Extract each term and its associated number of hits
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result.Aggregations
+                .Terms(productCounts).Buckets
+                .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
+            );
+
+            formattedResults.Should().BeEquivalentTo("mouse:3, mouse pad:2");
         }
 
         [Fact]
         public async Task KeywordMapping_CanBeUsedForMetricAggregation_Cardinality()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+
+            var productDocuments = new[] {
                         new ProductDocument(1, "mouse"),
                         new ProductDocument(2, "mouse pad"),
                         new ProductDocument(3, "mouse"),
@@ -86,26 +76,24 @@ namespace OpenSearchKeywordDemo
                         new ProductDocument(5, "mouse pad"),
                     };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    const string distinctProductTypes = "distinctProductTypes";
+            const string distinctProductTypes = "distinctProductTypes";
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           // We do not want any documents returned; just the aggregations
-                           .Size(0)
-                           .Aggregations(aggregations => aggregations
-                            .Cardinality(distinctProductTypes, selector => selector.Field(field => field.Name))
-                        )
-                    );
-
-                    // Extract the total number of distinct product names
-                    result.IsValid.Should().BeTrue();
-                    var distinctProductCount = result.Aggregations.Cardinality(distinctProductTypes).Value;
-                    distinctProductCount.Should().Be(2);
-                }
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   // We do not want any documents returned; just the aggregations
+                   .Size(0)
+                   .Aggregations(aggregations => aggregations
+                    .Cardinality(distinctProductTypes, selector => selector.Field(field => field.Name))
+                )
             );
+
+            // Extract the total number of distinct product names
+            result.IsValid.Should().BeTrue();
+            var distinctProductCount = result.Aggregations.Cardinality(distinctProductTypes).Value;
+            distinctProductCount.Should().Be(2);
         }
 
         /// <summary>
@@ -116,13 +104,9 @@ namespace OpenSearchKeywordDemo
         [Fact]
         public async Task KeywordMapping_CanBeUsedForTermAggregation_TopHits()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-            indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+
+            var productDocuments = new[] {
                         new ProductDocument(1, "mouse"),
                         new ProductDocument(2, "mouse pad"),
                         new ProductDocument(3, "mouse"),
@@ -130,44 +114,42 @@ namespace OpenSearchKeywordDemo
                         new ProductDocument(5, "mouse pad"),
                     };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    const string productTypes = "productTypes";
-                    const string topType = "topType";
+            const string productTypes = "productTypes";
+            const string topType = "topType";
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           // We do not want any documents returned; just the aggregations
-                           .Size(0)
-                           .Aggregations(aggregations => aggregations
-                            // Calculate terms of names
-                            .Terms(productTypes, terms => terms.Field(field => field.Name)
-                                .Aggregations(aggs => aggs
-                                    // Extract the top document of each term aggregate bucket, sorted by id descending
-                                    .TopHits(topType, selector => selector
-                                    .Sort(sort => sort.Descending(desc => desc.Id))
-                                    // Setting the size to 1 will only pull out the document with the highest id against the term
-                                    .Size(1)
-                                    ))
-                        ))
-                    );
-
-                    // Our top hits documents are the documents with the highest id for their term
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result
-                        .Aggregations.Terms(productTypes).Buckets
-                            .Select(bucket => bucket
-                                .TopHits(topType)
-                                .Documents<ProductDocument>()
-                                .Select(doc => $"{doc.Id}:{doc.Name}")
-                                // There is only one per term
-                                .First()
-                        ));
-
-                    formattedResults.Should().BeEquivalentTo("4:mouse, 5:mouse pad");
-                }
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   // We do not want any documents returned; just the aggregations
+                   .Size(0)
+                   .Aggregations(aggregations => aggregations
+                    // Calculate terms of names
+                    .Terms(productTypes, terms => terms.Field(field => field.Name)
+                        .Aggregations(aggs => aggs
+                            // Extract the top document of each term aggregate bucket, sorted by id descending
+                            .TopHits(topType, selector => selector
+                            .Sort(sort => sort.Descending(desc => desc.Id))
+                            // Setting the size to 1 will only pull out the document with the highest id against the term
+                            .Size(1)
+                            ))
+                ))
             );
+
+            // Our top hits documents are the documents with the highest id for their term
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result
+                .Aggregations.Terms(productTypes).Buckets
+                    .Select(bucket => bucket
+                        .TopHits(topType)
+                        .Documents<ProductDocument>()
+                        .Select(doc => $"{doc.Id}:{doc.Name}")
+                        // There is only one per term
+                        .First()
+                ));
+
+            formattedResults.Should().BeEquivalentTo("4:mouse, 5:mouse pad");
         }
 
         /// <summary>
@@ -178,13 +160,9 @@ namespace OpenSearchKeywordDemo
         [Fact]
         public async Task KeywordMapping_CanBeUsedForTermAggregation_Collapse()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-            indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+
+            var productDocuments = new[] {
                         new ProductDocument(1, "mouse"),
                         new ProductDocument(2, "mouse pad"),
                         new ProductDocument(3, "mouse"),
@@ -192,42 +170,36 @@ namespace OpenSearchKeywordDemo
                         new ProductDocument(5, "mouse pad"),
                     };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    const string productTypes = "productTypes";
-                    const string topType = "topType";
+            const string productTypes = "productTypes";
+            const string topType = "topType";
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           // We do not want any documents returned; just the aggregations
-                           //.Size(0)
-                           .Collapse(selector => selector.Field(field => field.Name))
-                           .Sort(sort => sort.Descending(field => field.Id))
-                           .From(0)
-                    );
-
-                    // Our top hits documents are the documents with the highest id for their term
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result.Documents.Select(doc => $"{doc.Id}:{doc.Name}"));
-                    formattedResults.Should().BeEquivalentTo("5:mouse pad, 4:mouse");
-                }
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   // We do not want any documents returned; just the aggregations
+                   //.Size(0)
+                   .Collapse(selector => selector.Field(field => field.Name))
+                   .Sort(sort => sort.Descending(field => field.Id))
+                   .From(0)
             );
+
+            // Our top hits documents are the documents with the highest id for their term
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result.Documents.Select(doc => $"{doc.Id}:{doc.Name}"));
+            formattedResults.Should().BeEquivalentTo("5:mouse pad, 4:mouse");
         }
 
         [Fact]
         public async Task KeywordMapping_CanBeUsedForAdjacencyMatrixAggregation()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex<UserFavouriteProducts>(
-                indexName,
-                mapping => mapping
-                    .Properties<UserFavouriteProducts>(propertyDescriptor => propertyDescriptor
-                        .Keyword(word => word.Name(name => name.ProductNames))
-                    ),
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var userPurchasedProductDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex<UserFavouriteProducts>(mapping => mapping
+            .Properties<UserFavouriteProducts>(propertyDescriptor => propertyDescriptor
+                .Keyword(word => word.Name(name => name.ProductNames))
+            ));
+
+            var userPurchasedProductDocuments = new[] {
                         new UserFavouriteProducts(1, new []{ "mouse", "mouse pad" }),
                         new UserFavouriteProducts(2, new []{ "mouse" }),
                         new UserFavouriteProducts(3, new []{ "keyboard" }),
@@ -236,34 +208,33 @@ namespace OpenSearchKeywordDemo
                         new UserFavouriteProducts(6, new []{ "mouse", "mouse pad" }),
                     };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, userPurchasedProductDocuments);
+            await testIndex.IndexDocuments(userPurchasedProductDocuments);
 
-                    const string userProductPurchases = "userProductPurchases";
+            const string userProductPurchases = "userProductPurchases";
 
-                    var result = await opensearchClient.SearchAsync<UserFavouriteProducts>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           // We do not want any documents returned; just the aggregations
-                           .Size(0)
-                           .Aggregations(aggregations => aggregations
-                            .AdjacencyMatrix(userProductPurchases, selector => selector
-                                .Filters(filter => filter
-                                    .Filter("mouse", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "mouse" })))
-                                    .Filter("mouse pad", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "mouse pad" })))
-                                    .Filter("keyboard", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "keyboard" })))
-                                )
-                            )
-                        ));
+            var result = await _fixture.OpenSearchClient.SearchAsync<UserFavouriteProducts>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   // We do not want any documents returned; just the aggregations
+                   .Size(0)
+                   .Aggregations(aggregations => aggregations
+                    .AdjacencyMatrix(userProductPurchases, selector => selector
+                        .Filters(filter => filter
+                            .Filter("mouse", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "mouse" })))
+                            .Filter("mouse pad", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "mouse pad" })))
+                            .Filter("keyboard", f => f.Terms(term => term.Field(f => f.ProductNames).Terms(new[] { "keyboard" })))
+                        )
+                    )
+                ));
 
-                    // Extract each term and its associated number of hits
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result.Aggregations
-                        .AdjacencyMatrix(userProductPurchases).Buckets
-                        .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
-                    );
+            // Extract each term and its associated number of hits
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result.Aggregations
+                .AdjacencyMatrix(userProductPurchases).Buckets
+                .Select(bucket => $"{bucket.Key}:{bucket.DocCount}")
+            );
 
-                    formattedResults.Should().BeEquivalentTo("keyboard:3, keyboard&mouse:1, keyboard&mouse pad:1, mouse:4, mouse pad:3, mouse&mouse pad:2");
-                });
+            formattedResults.Should().BeEquivalentTo("keyboard:3, keyboard&mouse:1, keyboard&mouse pad:1, mouse:4, mouse pad:3, mouse&mouse pad:2");
         }
     }
 }

@@ -3,11 +3,11 @@ using OpenSearchTestInfrastructure;
 
 namespace OpenSearchKeywordDemo
 {
-    public class KeywordSortingTests : IClassFixture<IndexFixture>
+    public class KeywordSortingTests : IClassFixture<OpenSearchIndexFixture>
     {
-        private IndexFixture _fixture;
+        private OpenSearchIndexFixture _fixture;
 
-        public KeywordSortingTests(IndexFixture fixture)
+        public KeywordSortingTests(OpenSearchIndexFixture fixture)
         {
             _fixture = fixture;
         }
@@ -25,39 +25,32 @@ namespace OpenSearchKeywordDemo
         [Fact]
         public async Task KeywordMapping_CanBeUsedToScriptASortedField()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
 };
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
+            await testIndex.IndexDocuments(productDocuments);
 
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           .Explain()
-                           .Sort(sort => sort
-                            .Script(sortScript => sortScript
-                                .Ascending()
-                                .Type("number")
-                                .Script(s => s.Source($"doc['{nameof(ProductDocument.Name).ToLowerInvariant()}'].value == 'mouse pad' ? 0 : 1")
-                                )
-                            )
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   .Explain()
+                   .Sort(sort => sort
+                    .Script(sortScript => sortScript
+                        .Ascending()
+                        .Type("number")
+                        .Script(s => s.Source($"doc['{nameof(ProductDocument.Name).ToLowerInvariant()}'].value == 'mouse pad' ? 0 : 1")
                         )
-                    );
-
-                    // Our scripted sort will return the mousepad at the top of the results
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
-                    formattedResults.Should().BeEquivalentTo("mouse pad, mouse");
-                }
+                    )
+                )
             );
+
+            // Our scripted sort will return the mousepad at the top of the results
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
+            formattedResults.Should().BeEquivalentTo("mouse pad, mouse");
         }
 
         [Fact]
@@ -66,67 +59,51 @@ namespace OpenSearchKeywordDemo
         /// </summary>
         public async Task KeywordMapping_CanBeUsedAsASortedField_WithoutAnySpecialConsiderations()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "mouse"),
     new ProductDocument(2, "mouse pad"),
 };
+            await testIndex.IndexDocuments(productDocuments);
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
-
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           .Explain()
-                           .Sort(sort => sort
-                            .Descending(fieldName => fieldName.Name)
-                        )
-                    );
-
-                    // Our documents can be sorted alphabetically
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
-                    formattedResults.Should().BeEquivalentTo("mouse pad, mouse");
-                }
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   .Explain()
+                   .Sort(sort => sort
+                    .Descending(fieldName => fieldName.Name)
+                )
             );
+
+            // Our documents can be sorted alphabetically
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
+            formattedResults.Should().BeEquivalentTo("mouse pad, mouse");
         }
 
         [Fact]
         public async Task KeywordMapping_ShouldNotBeUsedToSortNumericData()
         {
-            var indexName = "keyword-index";
-            await _fixture.PerformActionInTestIndex(
-                indexName,
-                mappingDescriptor,
-                async (uniqueIndexName, opensearchClient) =>
-                {
-                    var productDocuments = new[] {
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            var productDocuments = new[] {
     new ProductDocument(1, "5"),
     new ProductDocument(2, "2000"),
 };
+            await testIndex.IndexDocuments(productDocuments);
 
-                    await _fixture.IndexDocuments(uniqueIndexName, productDocuments);
-
-                    var result = await opensearchClient.SearchAsync<ProductDocument>(selector => selector
-                           .Index(uniqueIndexName)
-                           .Query(query => query.MatchAll())
-                           .Explain()
-                           .Sort(sort => sort
-                            .Descending(fieldName => fieldName.Name)
-                        )
-                    );
-
-                    // Our documents can be sorted alphabetically
-                    result.IsValid.Should().BeTrue();
-                    var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
-                    formattedResults.Should().BeEquivalentTo("5, 2000");
-                }
+            var result = await _fixture.OpenSearchClient.SearchAsync<ProductDocument>(selector => selector
+                   .Index(testIndex.Name)
+                   .Query(query => query.MatchAll())
+                   .Explain()
+                   .Sort(sort => sort
+                    .Descending(fieldName => fieldName.Name)
+                )
             );
+
+            // Our documents can be sorted alphabetically
+            result.IsValid.Should().BeTrue();
+            var formattedResults = string.Join(", ", result.Documents.Select(doc => doc.Name));
+            formattedResults.Should().BeEquivalentTo("5, 2000");
         }
     }
 }

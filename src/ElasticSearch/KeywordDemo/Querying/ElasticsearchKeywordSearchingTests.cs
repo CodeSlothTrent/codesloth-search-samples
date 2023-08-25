@@ -28,7 +28,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_ExactlyMatchesWholeTermQuery(string termText, string explanation)
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] 
             {
@@ -58,7 +58,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_CanBeFilteredOnWithBooleanQuery(string termText, string explanation)
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] 
             {
@@ -91,7 +91,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [InlineData("mouse pad", "Only the document with name mouse pad will match")]
         public async Task KeywordMapping_CanBeFilteredAndScoredOnWithConstantScoreQuery(string termText, string explanation)
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] 
             {
@@ -130,7 +130,7 @@ namespace ElasticsearchKeywordDemo.Querying
             This default behaviour only applies for text field mappings.")]
         public async Task KeywordMapping_ProducesNoQueryTimeAnlaysis_ForMatchQuery(string matchText, string[] expectedTokens, string explanation)
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] 
             {
@@ -169,7 +169,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [InlineData("Mouse pad", "Missing a space")]
         public async Task KeywordMapping_DoesNotMatchOnSlightlyMismatchedTerms(string termText, string explanation)
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] 
             {

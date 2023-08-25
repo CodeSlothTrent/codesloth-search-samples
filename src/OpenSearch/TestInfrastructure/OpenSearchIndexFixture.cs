@@ -1,36 +1,33 @@
-﻿using Nest;
+﻿using OpenSearch.Client;
+using OpenSearch.Net;
 
-namespace ElasticSearchTestInfrastructure
+namespace OpenSearchTestInfrastructure
 {
-    /// <summary>
-    /// This test fixture lives for the duration of all tests within a class
-    /// </summary>
-    public class ElasticsearchIndexFixture
+    public class OpenSearchIndexFixture
     {
-        public IElasticClient ElasticClient;
-
-        public ElasticsearchIndexFixture()
+        public IOpenSearchClient OpenSearchClient;
+        public OpenSearchIndexFixture()
         {
-            var clusterUri = new Uri("http://localhost:9200");
+            // This client uses 9201 so as to not port-clash with the elasticsearch containers
+            var clusterUri = new Uri("http://localhost:9201");
             var connectionSettings = new ConnectionSettings(clusterUri)
                 .DisableDirectStreaming()
-                .EnableApiVersioningHeader()
                 .EnableDebugMode();
 
-            ElasticClient = new ElasticClient(connectionSettings);
+            OpenSearchClient = new OpenSearchClient(connectionSettings);
         }
 
         /// <summary>
         /// Please use a using reserved word when creating a variable for the test index to ensure it is disposed properly
         /// Creates an <see cref="ElasticsearchTestIndex"/> which automatically creates an index and tears it down at the end of the test
         /// </summary>
-        public async Task<ElasticsearchTestIndex> CreateTestIndex<T>(
+        public async Task<OpensearchTestIndex> CreateTestIndex<T>(
             Func<TypeMappingDescriptor<T>, ITypeMapping> mappingDescriptor,
             Func<IndexSettingsDescriptor, IPromise<IIndexSettings>>? settingsDescriptor = null
             )
             where T : class
         {
-            var testIndex = new ElasticsearchTestIndex(ElasticClient);
+            var testIndex = new OpensearchTestIndex(OpenSearchClient);
             await testIndex.CreateIndex(mappingDescriptor, settingsDescriptor);
             return testIndex;
         }

@@ -26,7 +26,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedToCreateAScriptedField()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] {
     new ElasticsearchProductDocument(1, "mouse"),
@@ -63,7 +63,7 @@ namespace ElasticsearchKeywordDemo.Querying
         [Fact]
         public async Task KeywordMapping_CanBeUsedToCreateAScriptedField_FromAnInterpolatedVariable()
         {
-            using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+            await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
 
             var productDocuments = new[] {
     new ElasticsearchProductDocument(1, "mouse"),
