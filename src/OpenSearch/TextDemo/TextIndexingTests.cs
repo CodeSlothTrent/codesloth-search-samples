@@ -38,6 +38,10 @@ namespace OpenSearchKeywordDemo
         public async Task TextMapping_IndexesUsingStandardTokensiserForGivenString(string description, string[] expectedTokensAndFrequencies, string explanation)
         {
             await using var testIndex = await _fixture.CreateTestIndex(mappingDescriptor);
+
+            var mappingRequest = new GetMappingRequest();
+            var mappingResult = await _fixture.OpenSearchClient.Indices.GetMappingAsync(mappingRequest);
+
             var productDocument = new ProductDocument(1, description);
 
             await testIndex.IndexDocuments(new[] { productDocument });
