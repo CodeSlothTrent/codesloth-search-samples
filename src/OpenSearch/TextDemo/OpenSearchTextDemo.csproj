@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KeywordDemo\OpenSearchKeywordDemo.csproj" />
     <ProjectReference Include="..\TestInfrastructure\OpenSearchTestInfrastructure.csproj" />
   </ItemGroup>
 
