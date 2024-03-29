@@ -1,12 +1,12 @@
 {
-    "profiles": {
-        "OpenSearch": {
-            "commandName": "DockerCompose",
-            "commandVersion": "1.0",
-            "serviceActions": {
-                "opensearch-dashboards": "StartWithoutDebugging",
-                "opensearch-node1": "StartWithoutDebugging"
-            }
-        }
+  "profiles": {
+    "OpenSearch": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "opensearch-dashboards": "DoNotStart",
+        "opensearch-node1": "StartWithoutDebugging"
+      }
     }
+  }
 }

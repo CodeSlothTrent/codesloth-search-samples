@@ -22,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		SetMemory.ps1 = SetMemory.ps1
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomAnalyzerDemo", "OpenSearch\CustomAnalyzerDemo\CustomAnalyzerDemo.csproj", "{DE1B37C8-5FF9-42C8-AE11-94568F3552AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{5C6135A3-26B4-4D26-BD50-4ED75EAC4D9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C6135A3-26B4-4D26-BD50-4ED75EAC4D9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C6135A3-26B4-4D26-BD50-4ED75EAC4D9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE1B37C8-5FF9-42C8-AE11-94568F3552AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE1B37C8-5FF9-42C8-AE11-94568F3552AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE1B37C8-5FF9-42C8-AE11-94568F3552AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE1B37C8-5FF9-42C8-AE11-94568F3552AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,6 +60,7 @@ Global
 		{53DE3F48-6D57-47E1-A2FC-9E771452DF3F} = {8898E039-BE0E-48AC-97C6-DCF7E665E8E8}
 		{219AB68B-8A48-4901-9121-471896517EBA} = {8898E039-BE0E-48AC-97C6-DCF7E665E8E8}
 		{5E71B401-73B4-4E7E-B80A-FB2A5BA2051B} = {2AD1551F-D645-4343-987C-E0B938FFF89F}
+		{DE1B37C8-5FF9-42C8-AE11-94568F3552AB} = {8898E039-BE0E-48AC-97C6-DCF7E665E8E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8B681424-F471-4EC4-8EC1-B1D444539FC6}
